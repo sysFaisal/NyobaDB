@@ -1,0 +1,36 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "DB Test",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/test.exe",
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "build",
+      "postDebugTask": "clean",
+      "stopAtEntry": false,
+      "externalConsole": true,
+      "MIMode": "gdb"
+    },
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "cppdbg",
+      "request": "launch",
+      "args": [],
+      "stopAtEntry": false,
+      "externalConsole": true,
+      "cwd": "e:/Faisal/4. Code/dbtest/src",
+      "program": "e:/Faisal/4. Code/dbtest/src/build/Debug/outDebug",
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    }
+  ]
+}
