@@ -2,6 +2,8 @@
 #include <string.h>
 #include <stdbool.h>
 #include "setup.h"
+#include "login.h"
+#include "struct.h"
 #include "c_db/sqlite3.h"
 
 //Database (H)
@@ -32,31 +34,18 @@ int Cek_CallB(void *data, int argc, char **argv, char **azColName){
     return 0;
 }
 
-int PrintUserCallBack(void *data, int argc, char **argv, char **azColName){
-    int *row = (int *)data;
+int PrintUserCallBack(void *param, int argc, char **argv, char **azColName){
+    (void)azColName;
+    UserData *data = (UserData *)param;
+    UserList *List = data->List;
 
-    if (*row == 0) {
-        printf("No ");
-        for (int i = 0; i < argc; i++) {
-            printf("| %-10s ", azColName[i]);
-        }
-        printf("\n");
-
-        printf("---");
-        for (int i = 0; i < argc; i++) {
-            printf("+------------");
-        }
-        printf("\n");
-    }
-
-    (*row)++;
-    printf("%-2d ", *row);
-
+    int row = data->row;
     for (int i = 0; i < argc; i++) {
-        printf("| %-10s ", argv[i] ? argv[i] : "NULL");
+        List[row].id_user = desimal(argv[0]);
+        strcpy(List[row].nama, argv[i]);
     }
-    printf("\n");
 
+    data->row++;
     return 0;
 }
 
@@ -91,17 +80,12 @@ bool LoadUser(sqlite3 *db){
     }
 }
 
-void Print_User(sqlite3 *db){
+void Print_User(sqlite3 *db, UserList List[]){
     char *errMSG = NULL;
-    int row = 0;
+    UserData data = { List, 0 };
     const char *promptsql = "SELECT * FROM Users;";
 
-    int conn =  sqlite3_exec(db, promptsql, PrintUserCallBack, &row, &errMSG);
-
-    if (conn != SQLITE_OK){
-        printf("SQLITE Error : %s\n",errMSG);
-        sqlite3_free(errMSG);
-    }
+    sqlite3_exec(db, promptsql, PrintUserCallBack, &data, &errMSG);
 }
 
 //Main (H)
@@ -118,8 +102,6 @@ bool BeginSetup(sqlite3 **db, const char *DB_NAME){
     }
 
     if (LoadUser(*db)){
-        printf("\n");
-        Print_User(*db);
     } else {
         printf("Tidak ada user terdaftar\n");
     }

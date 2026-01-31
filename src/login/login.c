@@ -7,14 +7,23 @@
 
 // Desimal
 int desimal(char *desimal){
-    int panjang = strlen(desimal);
-    int pangkat = 1;
-    int hasil = 0; 
-    int i;
+    // 1. Cek keamanan: Jika NULL, kembalikan 0
+    if (desimal == NULL) return 0;
 
-    for (i = panjang - 1; i >= 0; i--) {
-		hasil = hasil + (desimal[i] - '0') * pangkat;
-        pangkat = pangkat * 10;
+    int hasil = 0;
+    int i = 0;
+
+    // Loop dari depan ke belakang
+    while (desimal[i] != '\0') {
+        // Cek apakah karakter adalah angka (0-9)
+        if (desimal[i] >= '0' && desimal[i] <= '9') {
+            // Geser angka sebelumnya ke kiri (dikali 10), tambah angka baru
+            hasil = (hasil * 10) + (desimal[i] - '0');
+        } else {
+            // Jika ketemu spasi, enter, atau huruf, BERHENTI (seperti atoi)
+            break;
+        }
+        i++;
     }
 
     return hasil;

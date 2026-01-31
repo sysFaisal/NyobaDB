@@ -17,29 +17,35 @@ WINDOW *right;
 
 int main(){
     sqlite3 *db = NULL;
-    LogSession Curent1;
-    LogSession Curent2;
-    int targetID = 0;
+    LogSession Curent1 = {0};
+    LogSession Curent2 = {0};
+    UserList Left[20],Right[20];
 
-    char buff[10];
+    //int targetID = 0;
+
+    //char buff[10];
     if(!BeginSetup(&db,DB_NAME)){
         return 0;
     }
 
+    printf("Status : %d\n",Curent1.status);
+    printf("Status : %d\n",Curent2.status);
+    
     printf("\nTekan Apa Saja Untuk Masuk Ke PD Curses...");
     getchar(); getchar();
 
     initscr();
     cbreak();
     noecho();
-    keypad(stdscr, TRUE);
     char ch;
     
-    while(((ch = getch()) != 'p')){
-        werase(left);
-        werase(right);
-        werase(top);
+    while(((ch = getch()) != 'q')){
+        werase(left); werase(right); werase(top);
         ui_init();
+        ui_draw(Curent1.status ,Curent2.status, db, Left, Right);
+
+        
+        
         wrefresh(left);
         wrefresh(right);
         wrefresh(top);

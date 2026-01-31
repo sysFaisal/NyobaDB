@@ -68,7 +68,6 @@ clean:
 	@if exist "$(OBJ_DIR)\setup.o" del /Q "$(OBJ_DIR)\setup.o"
 	@if exist "$(OBJ_DIR)\login.o" del /Q "$(OBJ_DIR)\login.o"
 	@if exist "$(OBJ_DIR)\ui.o" del /Q "$(OBJ_DIR)\ui.o"
-	@if exist "$(OBJ_DIR)\sqlite3.o" del /Q "$(OBJ_DIR)\sqlite3.o"
 	@if exist "$(TARGET)" del /Q "$(TARGET)"
 
 clean-all:

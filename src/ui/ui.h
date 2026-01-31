@@ -2,6 +2,8 @@
 #define UI_H
 
 #include "../PDCurses-3.9/curses.h"
+#include "c_db/sqlite3.h"
+#include "struct.h"
 
 // WINDOW 
 extern WINDOW *top;
@@ -18,5 +20,6 @@ extern ActiveWin active;
 
 // FUNCTION 
 void ui_init();
+void ui_draw(int Id_user1,int Id_user2, sqlite3 *db, UserList Left[], UserList Right[]);
 
 #endif
