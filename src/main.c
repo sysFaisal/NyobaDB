@@ -35,7 +35,7 @@ int main(){
     keypad(stdscr, TRUE);
     char ch;
     
-    while(((ch = getch()) != 'q')){
+    while(((ch = getch()) != 'p')){
         werase(left);
         werase(right);
         werase(top);
@@ -44,6 +44,8 @@ int main(){
         wrefresh(right);
         wrefresh(top);
     }
+
+
     /*
     while((ch = getch()) != 'q'){
 
