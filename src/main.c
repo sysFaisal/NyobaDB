@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include "struct.h"
 #include "c_db/sqlite3.h"
 #include "setup/setup.h"
@@ -10,6 +11,69 @@
 
 #define DB_NAME "db/data1.db"
 
+// Tambahkan parameter int ch
+void LogicUser(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch) {
+    
+    if (Curent->status == 0) {
+        mvwprintw(win, 19, 2, "Masukan ID : ");
+        char buff[10];
+        echo(); curs_set(1);
+        mvwgetnstr(win, 19, 15, buff, 9); 
+        noecho(); curs_set(0);
+        
+        ProsesLogin(db, atoi(buff), Curent);
+        Curent->highlight = 0; 
+        werase(win);
+        return; 
+    }
+    box(win, 0, 0);
+
+    if (ch != -1) {
+        switch(ch) {
+            case KEY_UP:   // 259
+                if (Curent->highlight > 0) {
+                    Curent->highlight--; 
+                } else {
+                    Curent->highlight = 4; 
+                }
+                break;
+
+            case KEY_DOWN: // 258
+                if (Curent->highlight < 4) {
+                    Curent->highlight++; 
+                } else {
+                    Curent->highlight = 0; 
+                }
+                break;
+
+            case 10:          
+            case KEY_ENTER:   
+            
+                if (Curent->highlight == 4) { 
+                    Curent->status = 0; 
+                    werase(win);
+                }
+                break;
+        }
+    }
+
+    box(win, 0, 0);
+    mvwprintw(win, 2, 2, "ID   : %d", Curent->id_user);
+    mvwprintw(win, 3, 2, "Nama   : %s", Curent->nama);
+
+    const char *Menu[5] = {"1. Profile", "2. Sell", "3. Buy", "4. Chat", "5. Logout"};
+    
+    for (int i = 0; i < 5; i++) {
+        if (i == Curent->highlight) {
+            wattron(win, A_REVERSE);
+            mvwprintw(win, i + 6, 2, " > %s ", Menu[i]); 
+            wattroff(win, A_REVERSE);
+            mvwprintw(win, 19, 2, "Pilihan > %s", Menu[Curent->highlight]);
+        } else {
+            mvwprintw(win, i + 6, 2, "   %s ", Menu[i]); 
+        }
+    }
+}
 
 int main(){
     sqlite3 *db = NULL;
@@ -17,9 +81,8 @@ int main(){
     LogSession Curent2 = {0};
     UserList Left[20],Right[20];
 
-    //int targetID = 0;
+    bool focus = false;
 
-    //char buff[10];
     if(!BeginSetup(&db,DB_NAME)){
         return 0;
     }
@@ -31,79 +94,41 @@ int main(){
     getchar(); getchar();
 
     initscr();
-    cbreak();
+    cbreak();  
     noecho();
-    char ch;
-    
+    keypad(stdscr, TRUE);
+    curs_set(0);
+    int ch;
+
+    ui_init();
+
     while(((ch = getch()) != 'q')){
         werase(left); werase(right); werase(top);
-        ui_init();
         ui_draw(Curent1.status ,Curent2.status, db, Left, Right);
 
+        mvwprintw(top, 1, 2, "DEBUG: Tombol = %d", ch);
         
-        
+        if (ch == '\t') {
+            focus = !focus;
+            ch = -1;
+        }
+
+        if (focus == true) {
+            mvwprintw(left, 1, 2, "Active");
+            LogicUser(left, &Curent1, db, ch); 
+            LogicUser(right, &Curent2, db, -1);
+        } else {
+            mvwprintw(right, 1, 2, "Active");
+            LogicUser(left, &Curent1, db, -1);
+            LogicUser(right, &Curent2, db, ch);
+        }
+    
         wrefresh(left);
         wrefresh(right);
         wrefresh(top);
+
     }
 
-
-    /*
-    while((ch = getch()) != 'q'){
-
-        if(ch == '\t')
-            active = !active;
-
-        // 1. bersihkan
-        werase(left);
-        werase(right);
-        werase(up);
-
-        // 2. gambar ulang border
-        box(up, 0,0);
-        box(left, 0, 0);
-        box(right, 0, 0);
-
-        char *well = "PROGRAM MINI MARKET";
-        int cb = 60 - (strlen(well) / 2);
-
-        // 3. render state
-        if(active == 0){
-            mvwprintw(left, 1, 2, "AKTIF");
-            if (Curent1.status != 1){
-                mvwprintw(left, 2, 2, "Masukkan ID : ");
-                wrefresh(left);
-                echo();
-                wgetnstr(left, buff, 9);   
-                noecho();
-                targetID = desimal(buff);
-                ProsesLogin(db,targetID,&Curent1);    
-            }
-            mvwprintw(left, 2, 2, "ID User = %d",Curent1.id_user);
-            mvwprintw(left, 3, 2, "Nama = %s",Curent1.nama);
-            mvwprintw(up, 1, cb, "%s %d",well,Curent1.id_user);
-        } else {
-            mvwprintw(right, 1, 2, "AKTIF");
-            if (Curent1.status != 1){
-                mvwprintw(right, 2, 2, "Masukkan ID : ");
-                wrefresh(right);
-                echo();
-                wgetnstr(right, buff, 9);   
-                noecho();
-                targetID = desimal(buff);
-                ProsesLogin(db,targetID,&Curent2);    
-            }
-            mvwprintw(right, 2, 2, "ID User = %d",Curent2.id_user);
-            mvwprintw(right, 3, 2, "Nama = %s",Curent2.nama);
-            mvwprintw(up, 1, cb, "%s %d",well,Curent2.id_user);
-        }
-
-        // 4. refresh SEMUA
-        wrefresh(left);
-        wrefresh(right);
-        wrefresh(up);
-    }
-    */
     endwin();
 
     printf("\nTekan Apa Saja Untuk Keluar...");

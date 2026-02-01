@@ -7,6 +7,7 @@ typedef struct {
     int id_user;
     char nama[MAX_NAME];
     int status;
+    int highlight
 } LogSession;
 
 typedef struct{
