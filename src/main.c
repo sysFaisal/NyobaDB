@@ -6,13 +6,9 @@
 #include "setup/setup.h"
 #include "login/login.h"
 #include "ui/ui.h"
-#include "../PDCurses-3.9/curses.h"
+#include <ncurses/ncurses.h>
 
 #define DB_NAME "db/data1.db"
-
-WINDOW *top;
-WINDOW *left;
-WINDOW *right;
 
 
 int main(){

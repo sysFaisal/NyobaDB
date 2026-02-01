@@ -1,5 +1,5 @@
 
-#include "../PDCurses-3.9/curses.h"
+#include <ncurses/ncurses.h>
 #include <string.h>
 #include "ui/ui.h"
 #include "setup.h"
@@ -9,7 +9,6 @@
 WINDOW *top;
 WINDOW *left;
 WINDOW *right;
-
 
 void ui_init() {
     //Maks Width CMD = 120

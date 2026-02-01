@@ -1,7 +1,7 @@
 #ifndef UI_H
 #define UI_H
 
-#include "../PDCurses-3.9/curses.h"
+#include <ncurses/ncurses.h>
 #include "c_db/sqlite3.h"
 #include "struct.h"
 

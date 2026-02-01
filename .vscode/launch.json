@@ -5,7 +5,7 @@
       "name": "DB Test",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/test.exe",
+      "program": "${workspaceFolder}/build/test.exe",
       "cwd": "${workspaceFolder}",
       "preLaunchTask": "build",
       "postDebugTask": "clean",
