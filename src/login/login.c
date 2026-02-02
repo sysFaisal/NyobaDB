@@ -1,33 +1,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include "struct.h"
 #include "login.h"
 #include "c_db/sqlite3.h"
-
-// Desimal
-int desimal(char *desimal){
-    // 1. Cek keamanan: Jika NULL, kembalikan 0
-    if (desimal == NULL) return 0;
-
-    int hasil = 0;
-    int i = 0;
-
-    // Loop dari depan ke belakang
-    while (desimal[i] != '\0') {
-        // Cek apakah karakter adalah angka (0-9)
-        if (desimal[i] >= '0' && desimal[i] <= '9') {
-            // Geser angka sebelumnya ke kiri (dikali 10), tambah angka baru
-            hasil = (hasil * 10) + (desimal[i] - '0');
-        } else {
-            // Jika ketemu spasi, enter, atau huruf, BERHENTI (seperti atoi)
-            break;
-        }
-        i++;
-    }
-
-    return hasil;
-}
 
 // Callback
 int LoginCallBack(void *data, int argc, char **argv, char **azColName){
@@ -38,7 +15,7 @@ int LoginCallBack(void *data, int argc, char **argv, char **azColName){
     if ( argv[0] == NULL){
         Session->id_user = 0; 
     } else {
-        Session->id_user = desimal(argv[0]);
+        Session->id_user = atoi(argv[0]);
     }
 
     if( argv[1] == NULL){

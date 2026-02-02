@@ -4,6 +4,5 @@
 #include "c_db/sqlite3.h"
 
 int ProsesLogin(sqlite3 *db,int targetID, LogSession *Curent);
-int desimal(char *desimal);
 
 #endif

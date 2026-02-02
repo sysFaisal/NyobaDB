@@ -2,9 +2,6 @@
 #include <string.h>
 #include <stdbool.h>
 #include "setup.h"
-#include "login.h"
-#include "struct.h"
-#include "ui/ui.h"
 #include "c_db/sqlite3.h"
 
 //Database (H)

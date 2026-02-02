@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include "controller.h"
 #include "struct.h"
 #include "ui/ui.h"
 #include "c_db/sqlite3.h"
@@ -14,11 +15,11 @@
 void LogicUser(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch) {
     
     if (Curent->status == 0) {
-        PrintList(win, db);
         LoginUser(win, Curent, db);
         
         return; 
     }
+    wrefresh(win);
     box(win, 0, 0);
 
     if (ch != -1) {

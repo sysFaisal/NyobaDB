@@ -6,6 +6,5 @@
 #include <ncurses/ncurses.h>
 
 void LoginUser(WINDOW *win, LogSession *Curent, sqlite3 *db);
-void PrintList(WINDOW *win, sqlite3 *db);
 
 #endif
