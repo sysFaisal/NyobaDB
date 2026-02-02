@@ -4,6 +4,7 @@
 #include "setup.h"
 #include "login.h"
 #include "struct.h"
+#include "ui/ui.h"
 #include "c_db/sqlite3.h"
 
 //Database (H)
@@ -31,21 +32,6 @@ int Cek_CallB(void *data, int argc, char **argv, char **azColName){
 
     int *found = (int *)data;
     *found = 1;
-    return 0;
-}
-
-int PrintUserCallBack(void *param, int argc, char **argv, char **azColName){
-    (void)azColName;
-    UserData *data = (UserData *)param;
-    UserList *List = data->List;
-
-    int row = data->row;
-    for (int i = 0; i < argc; i++) {
-        List[row].id_user = desimal(argv[0]);
-        strcpy(List[row].nama, argv[i]);
-    }
-
-    data->row++;
     return 0;
 }
 
@@ -78,14 +64,6 @@ bool LoadUser(sqlite3 *db){
         return false;
         printf(" Tidak Ada User Yang Terdaftar\n");
     }
-}
-
-void Print_User(sqlite3 *db, UserList List[]){
-    char *errMSG = NULL;
-    UserData data = { List, 0 };
-    const char *promptsql = "SELECT * FROM Users;";
-
-    sqlite3_exec(db, promptsql, PrintUserCallBack, &data, &errMSG);
 }
 
 //Main (H)

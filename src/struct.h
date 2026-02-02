@@ -10,14 +10,5 @@ typedef struct {
     int highlight
 } LogSession;
 
-typedef struct{
-    int id_user;
-    char nama[MAX_NAME];
-} UserList;
-
-typedef struct {
-    UserList *List;
-    int row;
-} UserData;
 
 #endif

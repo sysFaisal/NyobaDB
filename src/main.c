@@ -3,34 +3,27 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include "struct.h"
+#include "ui/ui.h"
 #include "c_db/sqlite3.h"
 #include "setup/setup.h"
 #include "login/login.h"
-#include "ui/ui.h"
 #include <ncurses/ncurses.h>
 
 #define DB_NAME "db/data1.db"
 
-// Tambahkan parameter int ch
 void LogicUser(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch) {
     
     if (Curent->status == 0) {
-        mvwprintw(win, 19, 2, "Masukan ID : ");
-        char buff[10];
-        echo(); curs_set(1);
-        mvwgetnstr(win, 19, 15, buff, 9); 
-        noecho(); curs_set(0);
+        PrintList(win, db);
+        LoginUser(win, Curent, db);
         
-        ProsesLogin(db, atoi(buff), Curent);
-        Curent->highlight = 0; 
-        werase(win);
         return; 
     }
     box(win, 0, 0);
 
     if (ch != -1) {
         switch(ch) {
-            case KEY_UP:   // 259
+            case KEY_UP:
                 if (Curent->highlight > 0) {
                     Curent->highlight--; 
                 } else {
@@ -38,7 +31,7 @@ void LogicUser(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch) {
                 }
                 break;
 
-            case KEY_DOWN: // 258
+            case KEY_DOWN:
                 if (Curent->highlight < 4) {
                     Curent->highlight++; 
                 } else {
@@ -73,13 +66,14 @@ void LogicUser(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch) {
             mvwprintw(win, i + 6, 2, "   %s ", Menu[i]); 
         }
     }
+
+
 }
 
 int main(){
     sqlite3 *db = NULL;
     LogSession Curent1 = {0};
     LogSession Curent2 = {0};
-    UserList Left[20],Right[20];
 
     bool focus = false;
 
@@ -104,7 +98,7 @@ int main(){
 
     while(((ch = getch()) != 'q')){
         werase(left); werase(right); werase(top);
-        ui_draw(Curent1.status ,Curent2.status, db, Left, Right);
+        ui_draw();
 
         mvwprintw(top, 1, 2, "DEBUG: Tombol = %d", ch);
         
