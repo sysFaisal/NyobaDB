@@ -62,20 +62,6 @@ int PrintList(WINDOW *win, sqlite3 *db){
     while(choice == -1){
         c = wgetch(win);
 
-        for (i = 0; i < temp.count; i++) {
-            if (i == highlight){
-                wattron(win, A_REVERSE);
-
-                mvwprintw(win, row + i, 2, "%d", i + 1);
-                mvwprintw(win, row + i, 7, "%d", temp.list[i].id_user);
-                mvwprintw(win, row + i, 20, "%s", temp.list[i].nama);
-            }
-            if (i == highlight){
-                wattroff(win, A_REVERSE);
-            }
-            
-        }
-
         mvwprintw(win, 19, 2, "Pilihan ID : %d", temp.list[highlight].id_user);
         wrefresh(win);
 
@@ -101,6 +87,21 @@ int PrintList(WINDOW *win, sqlite3 *db){
                 choice = temp.list[highlight].id_user;
                 break;
         }
+
+        for (i = 0; i < temp.count; i++) {
+            if (i == highlight){
+                wattron(win, A_REVERSE);
+                mvwprintw(win, row + i, 2, "%d", i + 1);
+                mvwprintw(win, row + i, 7, "%d", temp.list[i].id_user);
+                mvwprintw(win, row + i, 20, "%s", temp.list[i].nama);
+                wattroff(win, A_REVERSE);
+            } else {
+                mvwprintw(win, row + i, 2, "%d", i + 1);
+                mvwprintw(win, row + i, 7, "%d", temp.list[i].id_user);
+                mvwprintw(win, row + i, 20, "%s", temp.list[i].nama);
+            }
+            
+        }
     }
     return choice;
 }
@@ -117,5 +118,6 @@ void LoginUser(WINDOW *win, LogSession *Curent, sqlite3 *db){
     }
 
     werase(win);
+    box(win, 0, 0);
 }
 
