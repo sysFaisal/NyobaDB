@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include "controller.h"
+#include "controller/controller.h"
 #include "struct.h"
 #include "ui/ui.h"
 #include "c_db/sqlite3.h"

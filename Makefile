@@ -1,85 +1,42 @@
-# =================================================================
-# CONFIGURATION
-# =================================================================
-CC = gcc
+CC      := gcc
+# Menambahkan -DNCURSES_STATIC untuk stabilitas di Windows
+CFLAGS  := -Wall -Wextra -DNCURSES_STATIC -I./src -I./src/c_db -I./src/controller -I./src/login -I./src/setup -I./src/ui
+LDFLAGS := -lsqlite3 -lncursesw
 
-MSYS_ROOT = C:/msys64/mingw64
+TARGET  := build/test.exe
+OBJDIR  := build/obj
+SRCDIR  := src
 
-SRC_DIR = src
-OBJ_DIR = build\obj
+SRC := src/main.c src/controller/controller.c src/login/login.c src/setup/setup.c src/ui/ui.c
+OBJ := $(SRC:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+SQLITE_OBJ := $(OBJDIR)/sqlite3.o
 
-CFLAGS = -Wall -Wextra -O2 \
-    -I$(MSYS_ROOT)/include \
-    -I$(MSYS_ROOT)/include/ncurses \
-    -I$(SRC_DIR) \
-    -I$(SRC_DIR)/c_db \
-    -I$(SRC_DIR)/setup \
-    -I$(SRC_DIR)/login \
-    -I$(SRC_DIR)/ui
+FIX_PATH = $(subst /,\,$1)
 
-LIBS = -L$(MSYS_ROOT)/lib -lncursesw -lkernel32 -luser32 -lgdi32 -lwinmm -ladvapi32
+all: $(TARGET)
 
-TARGET = build\test.exe
+$(TARGET): $(OBJ) $(SQLITE_OBJ)
+	@echo [LINKING] Membuat file eksekusi...
+	@if not exist "build" mkdir "build"
+	@$(CC) $^ -o $@ $(LDFLAGS)
 
-OBJS = $(OBJ_DIR)\main.o \
-       $(OBJ_DIR)\setup.o \
-       $(OBJ_DIR)\login.o \
-       $(OBJ_DIR)\ui.o \
-       $(OBJ_DIR)\sqlite3.o
+$(OBJDIR)/%.o: $(SRCDIR)/%.c
+	@echo [COMPILING] $<...
+	@if not exist "$(call FIX_PATH,$(dir $@))" mkdir "$(call FIX_PATH,$(dir $@))"
+	@$(CC) $(CFLAGS) -c $< -o $@
 
-# =================================================================
-# BUILD TARGETS
-# =================================================================
-all: prepare $(TARGET)
+$(SQLITE_OBJ): src/c_db/sqlite3.c
+	@echo [WAITS] Mengompilasi SQLite3 (Sabar, ini lama)...
+	@if not exist "$(OBJDIR)" mkdir "$(OBJDIR)"
+	@$(CC) $(CFLAGS) -c $< -o $@
 
-# Membuat folder build jika belum ada
-prepare:
-	if not exist "$(OBJ_DIR)" mkdir "$(OBJ_DIR)"
-
-# Proses Linking
-$(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
-
-# =================================================================
-# RUN PROGRAM (di terminal VSCode)
-# =================================================================
 run: all
-	@echo.
-	@echo [MENJALANKAN PROGRAM...]
-	"$(TARGET)"
+	@echo [RUNNING]...
+	@./$(TARGET)
 
-# =================================================================
-# COMPILE RULES
-# =================================================================
-$(OBJ_DIR)\main.o: $(SRC_DIR)/main.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(OBJ_DIR)\setup.o: $(SRC_DIR)/setup/setup.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(OBJ_DIR)\login.o: $(SRC_DIR)/login/login.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(OBJ_DIR)\ui.o: $(SRC_DIR)/ui/ui.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-# SQLite3: compile hanya kalau belum ada
-$(OBJ_DIR)\sqlite3.o: $(SRC_DIR)/c_db/sqlite3.c
-	if not exist $(OBJ_DIR)\sqlite3.o $(CC) -O2 -I$(SRC_DIR)/c_db -c $< -o $@
-
-# =================================================================
-# CLEANUP
-# =================================================================
 clean:
-	del /Q $(OBJ_DIR)\main.o 2>nul
-	del /Q $(OBJ_DIR)\setup.o 2>nul
-	del /Q $(OBJ_DIR)\login.o 2>nul
-	del /Q $(OBJ_DIR)\ui.o 2>nul
-	del /Q $(TARGET) 2>nul
-	@echo Clean selesai, sqlite3.o tetap ada.
+	@echo [CLEANING]...
+	@for %%f in ($(call FIX_PATH,$(OBJ))) do @if exist %%f del /q %%f
+	@if exist $(call FIX_PATH,$(TARGET)) del /q $(call FIX_PATH,$(TARGET))
 
-clean-all:
-	if exist build rmdir /S /Q build
-	@echo Semua folder build dihapus, termasuk sqlite3.o.
-
-.PHONY: all prepare run clean clean-all
+.PHONY: all run clean

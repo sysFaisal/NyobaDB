@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include "src/struct.h"
+#include "../src/struct.h"
 #include "controller.h"
 #include "login/login.h"
 #include "ui/ui.h"
@@ -63,15 +63,17 @@ int PrintList(WINDOW *win, sqlite3 *db){
         c = wgetch(win);
 
         for (i = 0; i < temp.count; i++) {
-            if (i == highlight)
+            if (i == highlight){
                 wattron(win, A_REVERSE);
 
                 mvwprintw(win, row + i, 2, "%d", i + 1);
                 mvwprintw(win, row + i, 7, "%d", temp.list[i].id_user);
                 mvwprintw(win, row + i, 20, "%s", temp.list[i].nama);
-
-            if (i == highlight)
+            }
+            if (i == highlight){
                 wattroff(win, A_REVERSE);
+            }
+            
         }
 
         mvwprintw(win, 19, 2, "Pilihan ID : %d", temp.list[highlight].id_user);
