@@ -142,3 +142,54 @@ void LoginUser(WINDOW *win, LogSession *Curent, sqlite3 *db){
     box(win, 0, 0);
 }
 
+
+void FixLogout(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch){
+    (void)db;
+    (void)ch;
+
+    werase(win);
+    box(win, 0, 0);
+    mvwprintw(win, 2, 2, "Logging out...");
+    wrefresh(win);
+
+    napms(500);
+
+    Curent->status    = 0;
+    Curent->id_user   = 0;
+    Curent->highlight = 0;
+    Curent->menu = MENU_MAIN;
+}
+
+void MenuLogout(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch){
+    werase(win);
+    box(win, 0, 0);
+
+    mvwprintw(win, 2, 2, "LOG OUT");
+    mvwprintw(win, 5, 2, "[ENTER] Logout");
+    mvwprintw(win, 4, 2, "[B] Back");
+
+    if (ch == '\n' || ch == KEY_ENTER) {
+        FixLogout(win, Curent, db, ch);
+    } else if (ch == 'b' || ch == 'B') {
+        Curent->menu = MENU_MAIN;
+        Curent->highlight = 0;
+}
+
+
+}
+
+void UpdateSaldo(LogSession *Curent, sqlite3 *db){
+    /*
+    char Buff[100];
+    sprintf(Buff, "UPDATE Users SET saldo = saldo + 100 WHERE id_user = %d ;", Curent->id_user);
+    sqlite3_exec(db, Buff, NULL, NULL, NULL);
+    */
+}
+
+void UpdateNama(LogSession *Curent, sqlite3 *db){
+    /*
+    char Buff[100];
+    sprintf(Buff, "UPDATE Users SET nama = '%s' WHERE id_user = %d ;", Curent->nama, Curent->id_user);
+    sqlite3_exec(db, Buff, NULL, NULL, NULL);
+    */
+}

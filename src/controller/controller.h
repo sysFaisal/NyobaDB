@@ -8,6 +8,7 @@
 void LoginUser(WINDOW *win, LogSession *Curent, sqlite3 *db);
 int KeypadsInput(int c, int *highlight, int maxchoice);
 
-void MenuMain(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch);
+void UpdateNama(LogSession *Curent, sqlite3 *db);
+void UpdateSaldo(LogSession *Curent, sqlite3 *db);
 
 #endif

@@ -17,6 +17,7 @@ typedef struct {
     char nama[MAX_NAME];
     int status;
     int highlight;
+    int highlight_profile;
     MenuState menu;
 } LogSession;
 

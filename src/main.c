@@ -13,37 +13,55 @@
 #define DB_NAME "db/data1.db"
 
 void LogicUser(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch) {
-
         switch (Curent->menu) {
 
-        case MENU_MAIN:
+            case MENU_MAIN:
             MenuMain(win, Curent, db, ch);
             break;
 
-        case MENU_PROFILE:
-            MenuProfile(win, Curent, ch);
+            case MENU_PROFILE:
+            MenuProfile(win, Curent, db, ch);
             break;
 
-        case MENU_SELL:
+            case MENU_SELL:
             //MenuSell(win, Curent, db, ch);
             break;
 
-        case MENU_BUY:
+            case MENU_BUY:
             //MenuBuy(win, Curent, db, ch);
             break;
 
-        case MENU_CHAT:
+            case MENU_CHAT:
             //MenuChat(win, Curent, db, ch);
             break;
 
-        case MENU_LOGOUT:
-            //MenuLogout(win, Curent, db, ch);
+            case MENU_LOGOUT:
+            MenuLogout(win, Curent, db, ch);
             break;
 
         default:
             Curent->menu = MENU_MAIN;
             Curent->highlight = 0;
             break;
+    }
+}
+
+void UserHeader(WINDOW *header, LogSession *Curent, bool focus){
+    box(header, 0, 0);
+
+    if (focus == true) {
+        const char *Panel = " Panel User : Active ";
+        int panjang = (58 - strlen(Panel)) / 2;
+        mvwprintw(header, 0, panjang , " %s", Panel);
+    } else {
+        const char *Panel1 = " Panel User : Inactive ";
+        int panjang1 = (58 - strlen(Panel1)) / 2;
+        mvwprintw(header, 0, panjang1, "%s", Panel1);
+    }
+
+    if (Curent->status != 0) {
+        mvwprintw(header, 1, 2, "ID   : %d", Curent->id_user);
+        mvwprintw(header, 2, 2, "Nama   : %s", Curent->nama);
     }
 }
 
@@ -58,12 +76,6 @@ int main(){
         return 0;
     }
 
-    printf("Status : %d\n",Curent1.status);
-    printf("Status : %d\n",Curent2.status);
-    
-    printf("\nTekan Apa Saja Untuk Masuk Ke PD Curses...");
-    getchar(); getchar();
-
     initscr();
     cbreak();  
     noecho();
@@ -73,9 +85,13 @@ int main(){
 
     ui_init();
 
+    WINDOW *leftheader = derwin(left, 4, 58, 1, 1);
+    WINDOW *rightheader = derwin(right, 4, 58, 1, 1);
+
     while(((ch = getch()) != 'q')){
-        werase(left); werase(right); werase(top);
+        werase(left); werase(right); werase(top); werase(bottom);
         ui_draw();
+
 
         mvwprintw(top, 1, 2, "DEBUG: Tombol = %d", ch);
         
@@ -85,21 +101,35 @@ int main(){
         }
 
         if (focus == true) {
-            mvwprintw(left, 1, 2, "Active");
-            LogicUser(left, &Curent1, db, ch); 
+            UserHeader(leftheader,  &Curent1, true);
+            LogicUser(left, &Curent1, db, ch);
+
+            UserHeader(rightheader, &Curent2, false);
             LogicUser(right, &Curent2, db, -1);
+
         } else {
-            mvwprintw(right, 1, 2, "Active");
-            LogicUser(left, &Curent1, db, -1);
+            UserHeader(rightheader, &Curent2, true);
             LogicUser(right, &Curent2, db, ch);
+
+            UserHeader(leftheader,  &Curent1, false);
+            LogicUser(left, &Curent1, db, -1);
+
         }
-    
+        
         wrefresh(left);
         wrefresh(right);
         wrefresh(top);
+        wrefresh(bottom);
 
     }
 
+    delwin(leftheader);
+    delwin(rightheader);
+
+    delwin(left);
+    delwin(right);
+
+    endwin();
     endwin();
 
     printf("\nTekan Apa Saja Untuk Keluar...");

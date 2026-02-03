@@ -8,10 +8,14 @@
 extern WINDOW *top;
 extern WINDOW *left;
 extern WINDOW *right;
+extern WINDOW *bottom;
  
 void ui_init();
 void ui_draw();
-void MenuProfile(WINDOW *win, LogSession *Curent, int ch);
+
+
+void MenuProfile(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch);
+void MenuLogout(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch);
 void MenuMain(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch);
 
 #endif
