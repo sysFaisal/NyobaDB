@@ -22,33 +22,10 @@ void LogicUser(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch) {
     wrefresh(win);
     box(win, 0, 0);
 
+    int ChoiceMenu = -1;
+
     if (ch != -1) {
-        switch(ch) {
-            case KEY_UP:
-                if (Curent->highlight > 0) {
-                    Curent->highlight--; 
-                } else {
-                    Curent->highlight = 4; 
-                }
-                break;
-
-            case KEY_DOWN:
-                if (Curent->highlight < 4) {
-                    Curent->highlight++; 
-                } else {
-                    Curent->highlight = 0; 
-                }
-                break;
-
-            case 10:          
-            case KEY_ENTER:   
-            
-                if (Curent->highlight == 4) { 
-                    Curent->status = 0; 
-                    werase(win);
-                }
-                break;
-        }
+        ChoiceMenu = KeypadsInput(ch, &Curent->highlight, 5);
     }
 
     box(win, 0, 0);

@@ -34,6 +34,33 @@ int PrintUserCallBack(void *param, int argc, char **argv, char **azColName){
 }
     
 //Non CallBack
+int KeypadsInput(int c, int *highlight, int maxchoice){
+
+    switch(c){
+        case KEY_UP:
+            if (*highlight > 0) {
+                *highlight = *highlight - 1;
+            } else {
+                *highlight = maxchoice - 1; 
+            }
+            break;
+
+        case KEY_DOWN:
+            if (*highlight < maxchoice - 1) {
+                *highlight = *highlight + 1; 
+            } else {
+                *highlight = 0; 
+            }
+            break;
+
+        case 10:          
+        case KEY_ENTER:   
+            return *highlight;    
+    }
+    return -1;
+
+}
+
 int PrintList(WINDOW *win, sqlite3 *db){
     UserList List[20] = {0};
 
@@ -60,56 +87,50 @@ int PrintList(WINDOW *win, sqlite3 *db){
     keypad(win, TRUE);
 
     while(choice == -1){
+
         c = wgetch(win);
 
-        mvwprintw(win, 19, 2, "Pilihan ID : %d", temp.list[highlight].id_user);
+        mvwprintw(win, 1 , 2, "%s", "LOGIN");
+        mvwprintw(win, 2 , 2, "%s", "No");
+        mvwprintw(win, 2 , 7, "%s", "Id_user");
+        mvwprintw(win, 2 , 20, "%s", "Nama");
+
         wrefresh(win);
 
-        switch(c){
-            case KEY_UP:
-                if (highlight > 0) {
-                    highlight--; 
-                } else {
-                    highlight = temp.count - 1; 
-                }
-                break;
+        int Select = KeypadsInput(c, &highlight, temp.count);
 
-            case KEY_DOWN:
-                if (highlight < temp.count - 1) {
-                    highlight++; 
-                } else {
-                    highlight = 0; 
-                }
-                break;
-
-            case 10:          
-            case KEY_ENTER:   
-                choice = temp.list[highlight].id_user;
-                break;
+        if (Select != -1){
+            choice = temp.list[Select].id_user;  
         }
 
+        mvwprintw(win, 17, 2, "Pilihan CHoice : %d", temp.list[highlight].id_user);
+        
         for (i = 0; i < temp.count; i++) {
             if (i == highlight){
                 wattron(win, A_REVERSE);
+
                 mvwprintw(win, row + i, 2, "%d", i + 1);
                 mvwprintw(win, row + i, 7, "%d", temp.list[i].id_user);
                 mvwprintw(win, row + i, 20, "%s", temp.list[i].nama);
+
                 wattroff(win, A_REVERSE);
             } else {
+
                 mvwprintw(win, row + i, 2, "%d", i + 1);
                 mvwprintw(win, row + i, 7, "%d", temp.list[i].id_user);
                 mvwprintw(win, row + i, 20, "%s", temp.list[i].nama);
+
             }
-            
         }
     }
+    
     return choice;
 }
 
 void LoginUser(WINDOW *win, LogSession *Curent, sqlite3 *db){
 
     int ChoiceId = PrintList(win ,db);
-
+    
     if (ChoiceId != -1) {
         ProsesLogin(db, ChoiceId, Curent);
         Curent->highlight = 0;
