@@ -46,25 +46,6 @@ void LogicUser(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch) {
     }
 }
 
-void UserHeader(WINDOW *header, LogSession *Curent, bool focus){
-    box(header, 0, 0);
-
-    if (focus == true) {
-        const char *Panel = " Panel User : Active ";
-        int panjang = (58 - strlen(Panel)) / 2;
-        mvwprintw(header, 0, panjang , " %s", Panel);
-    } else {
-        const char *Panel1 = " Panel User : Inactive ";
-        int panjang1 = (58 - strlen(Panel1)) / 2;
-        mvwprintw(header, 0, panjang1, "%s", Panel1);
-    }
-
-    if (Curent->status != 0) {
-        mvwprintw(header, 1, 2, "ID   : %d", Curent->id_user);
-        mvwprintw(header, 2, 2, "Nama   : %s", Curent->nama);
-    }
-}
-
 int main(){
     sqlite3 *db = NULL;
     LogSession Curent1 = {0};

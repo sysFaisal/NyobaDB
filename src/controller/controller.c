@@ -64,8 +64,10 @@ int KeypadsInput(int c, int *highlight, int maxchoice){
 int PrintList(WINDOW *win, sqlite3 *db){
     UserList List[20] = {0};
 
-    werase(win);
+    //werase(win);
     box(win, 0, 0);
+
+    WINDOW *child = derwin(win, 18, 58, 5, 1); box(child, 0, 0);
 
     ViewContext temp;
     temp.count = 0;
@@ -76,26 +78,26 @@ int PrintList(WINDOW *win, sqlite3 *db){
     sqlite3_exec(db, promptsql, PrintUserCallBack, &temp, NULL);
 
     if (temp.count == 0) {
-        mvwprintw(win, 2, 2, "Tidak ada data user!");
-        wrefresh(win);
+        mvwprintw(child, 2, 2, "Tidak ada data user!");
+        wrefresh(child);
         return -1;
     }
 
     int highlight = 0; int choice = -1;
-    int c; int i, row = 3;
+    int c; int i, row = 2;
 
     keypad(win, TRUE);
+    keypad(child, TRUE);
 
     while(choice == -1){
 
-        c = wgetch(win);
+        c = wgetch(child);
 
-        mvwprintw(win, 1 , 2, "%s", "LOGIN");
-        mvwprintw(win, 2 , 2, "%s", "No");
-        mvwprintw(win, 2 , 7, "%s", "Id_user");
-        mvwprintw(win, 2 , 20, "%s", "Nama");
+        mvwprintw(child, 1 , 2, "%s", "No");
+        mvwprintw(child, 1 , 7, "%s", "Id_user");
+        mvwprintw(child, 1 , 20, "%s", "Nama");
 
-        wrefresh(win);
+        wrefresh(child);
 
         int Select = KeypadsInput(c, &highlight, temp.count);
 
@@ -103,27 +105,29 @@ int PrintList(WINDOW *win, sqlite3 *db){
             choice = temp.list[highlight].id_user;  
         }
 
-        mvwprintw(win, 17, 2, "Pilihan CHoice : %d", temp.list[highlight].id_user);
+        mvwprintw(child, 16, 2, "[DEBUG] Curent : %d", highlight);
+        mvwprintw(child, 15, 2, "Pilihan > %d", temp.list[highlight].id_user);
         
         for (i = 0; i < temp.count; i++) {
             if (i == highlight){
-                wattron(win, A_REVERSE);
+                wattron(child, A_REVERSE);
 
-                mvwprintw(win, row + i, 2, "%d", i + 1);
-                mvwprintw(win, row + i, 7, "%d", temp.list[i].id_user);
-                mvwprintw(win, row + i, 20, "%s", temp.list[i].nama);
+                mvwprintw(child, row + i, 2, "%d", i + 1);
+                mvwprintw(child, row + i, 7, "%d", temp.list[i].id_user);
+                mvwprintw(child, row + i, 20, "%s", temp.list[i].nama);
 
-                wattroff(win, A_REVERSE);
+                wattroff(child, A_REVERSE);
             } else {
 
-                mvwprintw(win, row + i, 2, "%d", i + 1);
-                mvwprintw(win, row + i, 7, "%d", temp.list[i].id_user);
-                mvwprintw(win, row + i, 20, "%s", temp.list[i].nama);
+                mvwprintw(child, row + i, 2, "%d", i + 1);
+                mvwprintw(child, row + i, 7, "%d", temp.list[i].id_user);
+                mvwprintw(child, row + i, 20, "%s", temp.list[i].nama);
 
             }
         }
     }
-
+    
+    delwin(child);
     return choice;
 }
 

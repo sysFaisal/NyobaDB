@@ -97,7 +97,7 @@ void MenuMain(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch) {
     wrefresh(win);
     box(win, 0, 0);
     box(child, 0, 0);
-
+    
     int ChoiceMenu = -1;
 
     if (ch != -1) {
@@ -170,7 +170,6 @@ void ProfilePilihan(WINDOW *child, LogSession *Curent, sqlite3 *db,int ch){
     }
 }
 
-
 void MenuProfile(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch){
 
     WINDOW *child = derwin(win, 18, 58, 5, 1);
@@ -194,4 +193,23 @@ void MenuProfile(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch){
     }
 }
 // END CODE =========================================================================
+void UserHeader(WINDOW *header, LogSession *Curent, bool focus){
+    box(header, 0, 0);
 
+    if (Curent->status != 0) {
+        mvwprintw(header, 1, 2, "ID   : %d", Curent->id_user);
+        mvwprintw(header, 2, 2, "Nama   : %s", Curent->nama);
+
+        if (focus == true) {
+            const char *Panel = " Panel User : Active ";
+            int panjang = (58 - strlen(Panel)) / 2;
+            mvwprintw(header, 0, panjang , " %s", Panel);
+        } else {
+            const char *Panel1 = " Panel User : Inactive ";
+            int panjang1 = (58 - strlen(Panel1)) / 2;
+            mvwprintw(header, 0, panjang1, "%s", Panel1);
+        }
+    } else {
+        mvwprintw(header, 1, 24, "L O G I N");
+    }
+}
