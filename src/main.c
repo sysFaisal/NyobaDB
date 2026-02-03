@@ -13,39 +13,38 @@
 #define DB_NAME "db/data1.db"
 
 void LogicUser(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch) {
-    
-    if (Curent->status == 0) {
-        LoginUser(win, Curent, db);
-        
-        return; 
+
+        switch (Curent->menu) {
+
+        case MENU_MAIN:
+            MenuMain(win, Curent, db, ch);
+            break;
+
+        case MENU_PROFILE:
+            MenuProfile(win, Curent, ch);
+            break;
+
+        case MENU_SELL:
+            //MenuSell(win, Curent, db, ch);
+            break;
+
+        case MENU_BUY:
+            //MenuBuy(win, Curent, db, ch);
+            break;
+
+        case MENU_CHAT:
+            //MenuChat(win, Curent, db, ch);
+            break;
+
+        case MENU_LOGOUT:
+            //MenuLogout(win, Curent, db, ch);
+            break;
+
+        default:
+            Curent->menu = MENU_MAIN;
+            Curent->highlight = 0;
+            break;
     }
-    wrefresh(win);
-    box(win, 0, 0);
-
-    int ChoiceMenu = -1;
-
-    if (ch != -1) {
-        ChoiceMenu = KeypadsInput(ch, &Curent->highlight, 5);
-    }
-
-    box(win, 0, 0);
-    mvwprintw(win, 2, 2, "ID   : %d", Curent->id_user);
-    mvwprintw(win, 3, 2, "Nama   : %s", Curent->nama);
-
-    const char *Menu[5] = {"1. Profile", "2. Sell", "3. Buy", "4. Chat", "5. Logout"};
-    
-    for (int i = 0; i < 5; i++) {
-        if (i == Curent->highlight) {
-            wattron(win, A_REVERSE);
-            mvwprintw(win, i + 6, 2, " > %s ", Menu[i]); 
-            wattroff(win, A_REVERSE);
-            mvwprintw(win, 19, 2, "Pilihan > %s", Menu[Curent->highlight]);
-        } else {
-            mvwprintw(win, i + 6, 2, "   %s ", Menu[i]); 
-        }
-    }
-
-
 }
 
 int main(){

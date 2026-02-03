@@ -55,7 +55,7 @@ int KeypadsInput(int c, int *highlight, int maxchoice){
 
         case 10:          
         case KEY_ENTER:   
-            return *highlight;    
+            return 1;   
     }
     return -1;
 
@@ -100,7 +100,7 @@ int PrintList(WINDOW *win, sqlite3 *db){
         int Select = KeypadsInput(c, &highlight, temp.count);
 
         if (Select != -1){
-            choice = temp.list[Select].id_user;  
+            choice = temp.list[highlight].id_user;  
         }
 
         mvwprintw(win, 17, 2, "Pilihan CHoice : %d", temp.list[highlight].id_user);
@@ -123,7 +123,7 @@ int PrintList(WINDOW *win, sqlite3 *db){
             }
         }
     }
-    
+
     return choice;
 }
 

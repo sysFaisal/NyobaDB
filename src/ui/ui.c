@@ -1,6 +1,7 @@
 
 #include <ncurses/ncurses.h>
 #include <string.h>
+#include "controller/controller.h"
 #include "ui/ui.h"
 #include "struct.h"
 
@@ -46,3 +47,64 @@ void ui_draw(){
     draw_left();
     draw_right();
 }
+
+void MenuMain(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch) {
+    
+    if (Curent->status == 0) {
+        LoginUser(win, Curent, db);
+        
+        return; 
+    }
+    wrefresh(win);
+    box(win, 0, 0);
+
+    int ChoiceMenu = -1;
+
+    if (ch != -1) {
+        ChoiceMenu = KeypadsInput(ch, &Curent->highlight, 5);
+    }
+
+    box(win, 0, 0);
+    mvwprintw(win, 2, 2, "ID   : %d", Curent->id_user);
+    mvwprintw(win, 3, 2, "Nama   : %s", Curent->nama);
+
+    const char *Menu[5] = {"1. Profile", "2. Sell", "3. Buy", "4. Chat", "5. Logout"};
+    
+    for (int i = 0; i < 5; i++) {
+        if (i == Curent->highlight) {
+            wattron(win, A_REVERSE);
+            mvwprintw(win, i + 6, 2, " > %s ", Menu[i]); 
+            wattroff(win, A_REVERSE);
+            mvwprintw(win, 19, 2, "Pilihan > %s", Menu[Curent->highlight]);
+        } else {
+            mvwprintw(win, i + 6, 2, "   %s ", Menu[i]); 
+        }
+    }
+
+    if (ChoiceMenu == 1) {
+        switch (Curent->highlight) {
+            case 0: Curent->menu = MENU_PROFILE; break;
+            case 1: Curent->menu = MENU_SELL; break;
+            case 2: Curent->menu = MENU_BUY; break;
+            case 3: Curent->menu = MENU_CHAT; break;
+            case 4: Curent->menu = MENU_LOGOUT; break;
+        }
+        Curent->highlight = 0;
+    }
+}
+
+void MenuProfile(WINDOW *win, LogSession *Curent, int ch)
+{
+    box(win, 0, 0);
+    mvwprintw(win, 2, 2, "=== PROFILE ===");
+    mvwprintw(win, 4, 2, "ID   : %d", Curent->id_user);
+    mvwprintw(win, 5, 2, "Nama : %s", Curent->nama);
+    mvwprintw(win, 7, 2, "[B] Back");
+
+    if (ch == 'b' || ch == 'B') {
+        Curent->menu = MENU_MAIN;
+        Curent->highlight = 0;
+    }
+}
+
+
