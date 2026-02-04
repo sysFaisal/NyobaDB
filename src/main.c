@@ -13,35 +13,54 @@
 #define DB_NAME "db/data1.db"
 
 void LogicUser(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch) {
-        switch (Curent->menu) {
+        
+    if (Curent->level < 0 || Curent->level >= MAX_MENU_LEVEL) {
+        Curent->level = 0;
+    }
+    
+    switch (Curent->menu) {
 
-            case MENU_MAIN:
+        case MENU_MAIN:
+            // highlight utama aman
+            if (Curent->highlight[Curent->level] < 0 ||
+                Curent->highlight[Curent->level] >= 5) {
+                Curent->highlight[Curent->level] = 0;
+            }
             MenuMain(win, Curent, db, ch);
             break;
 
-            case MENU_PROFILE:
+        case MENU_PROFILE:
+            if (Curent->highlight[Curent->level] < 0 ||
+                Curent->highlight[Curent->level] >= 2) {
+                Curent->highlight[Curent->level] = 0;
+            }
             MenuProfile(win, Curent, db, ch);
             break;
 
-            case MENU_SELL:
-            //MenuSell(win, Curent, db, ch);
+        case MENU_SELL:
+            // kalau nanti diaktifkan
+            MenuSell(win, Curent, db, ch);
             break;
 
-            case MENU_BUY:
-            //MenuBuy(win, Curent, db, ch);
+        case MENU_BUY:
+            // MenuBuy(win, Curent, db, ch);
             break;
 
-            case MENU_CHAT:
-            //MenuChat(win, Curent, db, ch);
+        case MENU_CHAT:
+            // MenuChat(win, Curent, db, ch);
             break;
 
-            case MENU_LOGOUT:
+        case MENU_LOGOUT:
             MenuLogout(win, Curent, db, ch);
             break;
 
         default:
-            Curent->menu = MENU_MAIN;
-            Curent->highlight = 0;
+            // RESET TOTAL (ANTI BLANK)
+            Curent->menu  = MENU_MAIN;
+            Curent->level = 0;
+            for (int i = 0; i < MAX_MENU_LEVEL; i++) {
+                Curent->highlight[i] = 0;
+            }
             break;
     }
 }
@@ -57,11 +76,8 @@ int main(){
         return 0;
     }
 
-    initscr();
-    cbreak();  
-    noecho();
-    keypad(stdscr, TRUE);
-    curs_set(0);
+    initscr(); cbreak(); noecho();
+    keypad(stdscr, TRUE); curs_set(0);
     int ch;
 
     ui_init();
@@ -82,18 +98,18 @@ int main(){
         }
 
         if (focus == true) {
+            UserHeader(rightheader, &Curent2, false);
             UserHeader(leftheader,  &Curent1, true);
+
+            LogicUser(right, &Curent2, db, -1);
             LogicUser(left, &Curent1, db, ch);
 
-            UserHeader(rightheader, &Curent2, false);
-            LogicUser(right, &Curent2, db, -1);
-
         } else {
-            UserHeader(rightheader, &Curent2, true);
-            LogicUser(right, &Curent2, db, ch);
-
             UserHeader(leftheader,  &Curent1, false);
+            UserHeader(rightheader, &Curent2, true);
+
             LogicUser(left, &Curent1, db, -1);
+            LogicUser(right, &Curent2, db, ch);
 
         }
         

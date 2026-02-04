@@ -17,6 +17,7 @@ void ui_draw();
 void MenuProfile(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch);
 void MenuLogout(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch);
 void MenuMain(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch);
+void MenuSell(WINDOW *win, LogSession *Curent, sqlite3 *db,int ch);
 void UserHeader(WINDOW *header, LogSession *Curent, bool focus);
 
 #endif

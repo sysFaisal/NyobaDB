@@ -132,18 +132,17 @@ int PrintList(WINDOW *win, sqlite3 *db){
 }
 
 void LoginUser(WINDOW *win, LogSession *Curent, sqlite3 *db){
+    int ChoiceId = PrintList(win, db);
 
-    int ChoiceId = PrintList(win ,db);
-    
     if (ChoiceId != -1) {
         ProsesLogin(db, ChoiceId, Curent);
-        Curent->highlight = 0;
-    } else {
+
+        Curent->menu = MENU_MAIN;
+        Curent->level = 0;
+
+        Curent->highlight[0] = 0;
 
     }
-
-    werase(win);
-    box(win, 0, 0);
 }
 
 
@@ -158,42 +157,205 @@ void FixLogout(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch){
 
     napms(500);
 
-    Curent->status    = 0;
-    Curent->id_user   = 0;
-    Curent->highlight = 0;
-    Curent->menu = MENU_MAIN;
+    Curent->status = 0;
+    Curent->menu   = MENU_MAIN;
+    Curent->level  = 0;
+    Curent->highlight[0] = 0;
+
+    werase(win);
+    box(win, 0, 0);
+
 }
 
 void MenuLogout(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch){
+    (void)db;
+
     werase(win);
     box(win, 0, 0);
 
     mvwprintw(win, 2, 2, "LOG OUT");
-    mvwprintw(win, 5, 2, "[ENTER] Logout");
-    mvwprintw(win, 4, 2, "[B] Back");
+    mvwprintw(win, 4, 2, "[ENTER] Logout");
+    mvwprintw(win, 5, 2, "[B] Back");
 
     if (ch == '\n' || ch == KEY_ENTER) {
         FixLogout(win, Curent, db, ch);
     } else if (ch == 'b' || ch == 'B') {
         Curent->menu = MENU_MAIN;
-        Curent->highlight = 0;
+        Curent->level = 0;
+    }
+
+    wrefresh(win);
 }
 
+typedef struct {
+    int flags;
+    int saldo;
+} WalletCheck;
 
+int WalletCheckCallBack(void *dat, int argc, char **argv, char **azColName){
+    (void)azColName;
+    (void)argc;
+
+    WalletCheck *temp1 = (WalletCheck *)dat;
+    temp1->flags = 1;
+    temp1->saldo = atoi(argv[0]);
+    
+    return 0;
 }
 
-void UpdateSaldo(LogSession *Curent, sqlite3 *db){
-    /*
-    char Buff[100];
-    sprintf(Buff, "UPDATE Users SET saldo = saldo + 100 WHERE id_user = %d ;", Curent->id_user);
-    sqlite3_exec(db, Buff, NULL, NULL, NULL);
-    */
+void UpdateSaldo(WINDOW *child, LogSession *Curent, sqlite3 *db, int ch){
+    (void)ch;
+    WalletCheck temp1 = {0};
+
+    char buff[256]; char buff2[20] = "";
+    char *errMSG = NULL;
+
+    snprintf(buff, sizeof(buff), 
+        "SELECT saldo FROM Wallet WHERE id_user = %d;",
+        Curent->id_user
+    );
+
+    echo();
+    curs_set(1);
+
+    mvwprintw(child, 16, 2, "Masukan Saldo : ");
+
+    wmove(child, 16, 18);
+    wgetnstr(child, buff2, sizeof(buff2) - 1);
+    int Saldo = atoi(buff2);
+
+    noecho();
+    curs_set(0);
+
+    werase(child);
+    box(child, 0, 0);
+
+    sqlite3_exec(db, buff, WalletCheckCallBack, &temp1, &errMSG);
+
+    if (temp1.flags != 1) {
+        snprintf(buff, sizeof(buff), 
+        "INSERT INTO Wallet (id_user, saldo) VALUES (%d, %d);",
+         Curent->id_user, Saldo
+        );
+    } else {
+        snprintf(buff, sizeof(buff),
+         "UPDATE Wallet SET saldo = %d WHERE id_user = %d;",
+          Saldo, Curent->id_user
+        );
+    }
+
+    int rc = sqlite3_exec(db, buff, NULL, NULL, &errMSG);
+
+    if (rc != SQLITE_OK) {
+            mvwprintw(child, 10, 2, "SQL Error: %s", errMSG);
+            sqlite3_free(errMSG);
+            wrefresh(child);
+            wgetch(child);
+            return;
+        }
+
+    mvwprintw(child, 10, 2, "Data berhasil disimpan!");
+    mvwprintw(child, 12, 2, "Saldo baru : %d", Saldo);
+    mvwprintw(child, 14, 2, "[ENTER / B] Kembali");
+
+    wrefresh(child);
+
+    while ((ch = wgetch(child))) {
+        if (ch == 'b' || ch == 'B' || ch == 10) {
+            return;   
+        }
+    }
 }
 
-void UpdateNama(LogSession *Curent, sqlite3 *db){
-    /*
+/*
+void UpdateNama(WINDOW *child,LogSession *Curent, sqlite3 *db){
+    
     char Buff[100];
     sprintf(Buff, "UPDATE Users SET nama = '%s' WHERE id_user = %d ;", Curent->nama, Curent->id_user);
     sqlite3_exec(db, Buff, NULL, NULL, NULL);
-    */
+
+    }
+*/
+
+typedef struct {
+    char barang[100];
+    int jumlah;
+    int harga;
+} SellProductView;
+
+void SellProduct(WINDOW *child, LogSession *Curent, sqlite3 *db, int ch){
+    (void)ch;
+
+    SellProductView temp = {0};
+    char buff[512];
+
+    werase(child);
+    box(child, 0, 0);
+
+    mvwprintw(child, 2, 2, "=== SELL PRODUCT ===");
+    mvwprintw(child, 4, 2, "Name   : ");
+    mvwprintw(child, 5, 2, "Qty    : ");
+    mvwprintw(child, 6, 2, "Cost   : ");
+    mvwprintw(child, 8, 2, "[ENTER] Simpan");
+
+    echo();
+    curs_set(1);
+
+    //Nama
+    wmove(child, 4, 15);
+    wgetnstr(child, buff, sizeof(buff) - 1);
+    strncpy(temp.barang, buff, sizeof(temp.barang) - 1);
+
+    //Qty
+    wmove(child, 5, 15);
+    wgetnstr(child, buff, 5);
+    temp.jumlah = atoi(buff);
+
+    //Harga
+    wmove(child, 6, 15);
+    wgetnstr(child, buff, 20);
+    temp.harga = atoi(buff);
+
+    noecho();
+    curs_set(0);
+
+    
+    if (temp.harga <= 0 || temp.jumlah <= 0 || strlen(temp.barang) == 0) {
+        mvwprintw(child, 10, 2, "Input tidak valid!");
+        wrefresh(child);
+        wgetch(child);
+        return;
+    }
+
+
+    snprintf(
+        buff,
+        sizeof(buff),
+        "INSERT INTO Product (id_user, Nama, Jumlah, Harga) "
+        "VALUES (%d, '%s', %d, %d);",
+        Curent->id_user,
+        temp.barang,
+        temp.jumlah,
+        temp.harga
+    );
+
+    char *errMSG = NULL;
+    int rc = sqlite3_exec(db, buff, NULL, NULL, &errMSG);
+
+    if (rc != SQLITE_OK) {
+        mvwprintw(child, 10, 2, "SQL Error: %s", errMSG);
+        sqlite3_free(errMSG);
+        wrefresh(child);
+        wgetch(child);
+        return;
+    }
+
+    mvwprintw(child, 10, 2, "Data berhasil disimpan!");
+    wrefresh(child);
+
+    while ((ch = wgetch(child))) {
+        if (ch == 'b' || ch == 'B' || ch == 10) {
+            return;   
+        }
+    }
 }
