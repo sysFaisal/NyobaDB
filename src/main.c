@@ -30,15 +30,10 @@ void LogicUser(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch) {
             break;
 
         case MENU_PROFILE:
-            if (Curent->highlight[Curent->level] < 0 ||
-                Curent->highlight[Curent->level] >= 2) {
-                Curent->highlight[Curent->level] = 0;
-            }
             MenuProfile(win, Curent, db, ch);
             break;
 
         case MENU_SELL:
-            // kalau nanti diaktifkan
             MenuSell(win, Curent, db, ch);
             break;
 
@@ -78,17 +73,20 @@ int main(){
 
     initscr(); cbreak(); noecho();
     keypad(stdscr, TRUE); curs_set(0);
-    int ch;
+    //int ch;
 
     ui_init();
 
     WINDOW *leftheader = derwin(left, 4, 58, 1, 1);
     WINDOW *rightheader = derwin(right, 4, 58, 1, 1);
 
+    int ch = -1;
+
+    
     while(((ch = getch()) != 'q')){
+
         werase(left); werase(right); werase(top); werase(bottom);
         ui_draw();
-
 
         mvwprintw(top, 1, 2, "DEBUG: Tombol = %d", ch);
         
@@ -98,15 +96,15 @@ int main(){
         }
 
         if (focus == true) {
-            UserHeader(rightheader, &Curent2, false);
-            UserHeader(leftheader,  &Curent1, true);
+            UserHeader(rightheader, &Curent2, false, db);
+            UserHeader(leftheader,  &Curent1, true, db);
 
             LogicUser(right, &Curent2, db, -1);
             LogicUser(left, &Curent1, db, ch);
 
         } else {
-            UserHeader(leftheader,  &Curent1, false);
-            UserHeader(rightheader, &Curent2, true);
+            UserHeader(leftheader,  &Curent1, false, db);
+            UserHeader(rightheader, &Curent2, true, db);
 
             LogicUser(left, &Curent1, db, -1);
             LogicUser(right, &Curent2, db, ch);

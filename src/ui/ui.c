@@ -85,6 +85,32 @@ void ui_draw(){
     draw_bottom();
 }
 
+// GET NAMA =========================================================================
+int GetNamaCallBack(void *data, int argc, char **argv, char **azColName){
+    (void)azColName;
+    (void)argc;
+
+    char *buf = (char *)data;
+
+    if (argv[0]) {
+        strcpy(buf, argv[0]);
+    }
+    return 0;
+}
+
+char *GetNama(LogSession *Curent, sqlite3 *db){
+    static char nama[64]; 
+    nama[0] = '\0';
+
+    char buff[128];
+    sprintf(buff,
+        "SELECT Nama FROM Users WHERE id_user = %d;",
+        Curent->id_user
+    );
+
+    sqlite3_exec(db, buff, GetNamaCallBack, nama, NULL);
+    return nama;
+}
 
 // GET SALDO =========================================================================
 int GetSaldoCallBack(void *data, int argc, char **argv, char **azColName){
@@ -143,7 +169,8 @@ void MenuMain(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch){
     }
 
     wrefresh(child);
-
+    mvwprintw(child, 16, 2, "> %s", Menu[Curent->highlight[0]]);
+    mvwprintw(child, 16, 55, "%d", Curent->highlight[0]);
 
     if (choice == 1) {
         Curent->level = 1;          // NAIK LEVEL
@@ -175,7 +202,7 @@ void ProfilePilihan(WINDOW *child, LogSession *Curent, sqlite3 *db, int ch){
         choice = KeypadsInput(ch, &Curent->highlight[1], 2);
     }
 
-    int row = 7;
+    int row = 12;
     for (int i = 0; i < 2; i++) {
         if (i == Curent->highlight[1]) {
             wattron(child, A_REVERSE);
@@ -186,60 +213,66 @@ void ProfilePilihan(WINDOW *child, LogSession *Curent, sqlite3 *db, int ch){
         }
     }
 
-    mvwprintw(child, 16, 2, "%d", Curent->highlight[1]);
+    mvwprintw(child, 16, 55, "%d", Curent->highlight[1]);
+    mvwprintw(child, 16, 2, "> %s", Pilihan[Curent->highlight[1]]);
+
     if (choice == 1) {
         switch (Curent->highlight[1]) {
             case 0: UpdateSaldo(child, Curent, db, ch); break;
-            case 1: //UpdateNama(child, Curent, db, ch); break;
+            case 1: UpdateNama(child, Curent, db, ch); break;
         }
     }
 }
 
 void MenuProfile(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch){
-    static WINDOW *child = NULL;
-    static WINDOW *foto  = NULL;
+    WINDOW *child = derwin(win, 18, 58, 5, 1);
+    WINDOW *foto  = derwin(child, 5, 9, 1, 2);
 
+    /*
     if (!child) {
         child = derwin(win, 18, 58, 5, 1);
         foto  = derwin(child, 5, 9, 1, 2);
     }
-
+    */
     werase(child);
     werase(foto);
+
     box(child, 0, 0);
     box(foto, 0, 0);
-
-    GetSaldo(Curent, db);
+    
     mvwprintw(child, 2, 12, "ID User : %d", Curent->id_user);
-    mvwprintw(child, 3, 12, "Nama    : %s", Curent->nama);
+    mvwprintw(child, 3, 12, "Nama    : %s", GetNama(Curent, db));
     mvwprintw(child, 4, 12, "Saldo   : %d", GetSaldo(Curent, db));
 
     ProfilePilihan(child, Curent, db, ch);
+
 
     if (ch == 'b' || ch == 'B') {
         Curent->menu = MENU_MAIN;
         Curent->level = 0;
 
-        delwin(foto);
-        delwin(child);
-        foto = NULL;
-        child = NULL;
     }
 
     wrefresh(foto);
     wrefresh(child);
+
+    if (Curent->menu != MENU_PROFILE) {
+        delwin(foto);
+        delwin(child);
+    }
+  
 }
 // END CODE =========================================================================
 
 
 // HEADER ========================================================================
-void UserHeader(WINDOW *header, LogSession *Curent, bool focus){
+void UserHeader(WINDOW *header, LogSession *Curent, bool focus, sqlite3 *db){
     box(header, 0, 0);
 
     mvwprintw(header, 15, 2, "ID   : %d", Curent->menu);
     if (Curent->status != 0) {
         mvwprintw(header, 1, 2, "ID   : %d", Curent->id_user);
-        mvwprintw(header, 2, 2, "Nama   : %s", Curent->nama);
+        mvwprintw(header, 2, 2, "Nama   : %s", GetNama(Curent, db));
 
         if (focus == true) {
             const char *Panel = " Panel User : Active ";
@@ -251,6 +284,8 @@ void UserHeader(WINDOW *header, LogSession *Curent, bool focus){
             mvwprintw(header, 0, panjang1, "%s", Panel1);
         }
     } else {
+        werase(header);
+        box(header, 0, 0);
         mvwprintw(header, 1, 24, "L O G I N");
     }
 }
@@ -283,6 +318,7 @@ int ListProductCallBack(void *param, int argc, char **argv, char **azColName){
 } 
 
 void ListProduct(WINDOW *child, LogSession *Curent, sqlite3 *db,int ch){
+    (void)ch;
 
     char Buff[100]; 
     char *errMsg = NULL;
@@ -328,7 +364,7 @@ void SellPilihan(WINDOW *child, LogSession *Curent, sqlite3 *db,int ch){
         }
     }
 
-    int i, row = 7;
+    int i, row = 12;
     for (i = 0; i < 2; i++){
         if (i == Curent->highlight[1]){
             wattron(child, A_REVERSE);
@@ -339,10 +375,10 @@ void SellPilihan(WINDOW *child, LogSession *Curent, sqlite3 *db,int ch){
         }
     }
 
-    mvwprintw(child, 16, 2, "[DEBUG] Curent %d", Curent->highlight[1]);
+    mvwprintw(child, 16, 55, "%d", Curent->highlight[1]);
 
     if (Curent->highlight[1] >= 0 && Curent->highlight[1] < 2) {
-        mvwprintw(child, 15, 2, "Choice > %s", Pilihan[Curent->highlight[1]]);
+        mvwprintw(child, 16, 2, "> %s", Pilihan[Curent->highlight[1]]);
 
     }
 
@@ -356,11 +392,7 @@ void SellPilihan(WINDOW *child, LogSession *Curent, sqlite3 *db,int ch){
 
 void MenuSell(WINDOW *win, LogSession *Curent, sqlite3 *db,int ch){
 
-    static WINDOW *child = NULL;
-
-    if (!child) {
-        child = derwin(win, 18, 58, 5, 1);
-    }
+    WINDOW *child = derwin(win, 18, 58, 5, 1);
     
     werase(child);
     box (child, 0, 0);
@@ -379,9 +411,10 @@ void MenuSell(WINDOW *win, LogSession *Curent, sqlite3 *db,int ch){
     if (ch == 'b' || ch == 'B') {
         Curent->menu = MENU_MAIN;
         Curent->level = 0;
+    }
 
+    if (Curent->menu != MENU_SELL) {
         delwin(child);
-        child = NULL;
     }
 }
 // END CODE =========================================================================

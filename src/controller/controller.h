@@ -9,7 +9,7 @@
 void LoginUser(WINDOW *win, LogSession *Curent, sqlite3 *db);
 int KeypadsInput(int c, int *highlight, int maxchoice);
 
-//void UpdateNama(LogSession *Curent, sqlite3 *db);
+void UpdateNama(WINDOW *child,LogSession *Curent, sqlite3 *db, int ch);
 void UpdateSaldo(WINDOW *child, LogSession *Curent, sqlite3 *db, int ch);
 void SellProduct(WINDOW *child, LogSession *Curent, sqlite3 *db, int ch);
 

@@ -105,8 +105,8 @@ int PrintList(WINDOW *win, sqlite3 *db){
             choice = temp.list[highlight].id_user;  
         }
 
-        mvwprintw(child, 16, 2, "[DEBUG] Curent : %d", highlight);
-        mvwprintw(child, 15, 2, "Pilihan > %d", temp.list[highlight].id_user);
+        mvwprintw(child, 16, 51, "%d : %d", highlight, highlight + 1);
+        mvwprintw(child, 16, 2, ">  %d", temp.list[highlight].id_user);
         
         for (i = 0; i < temp.count; i++) {
             if (i == highlight){
@@ -163,7 +163,6 @@ void FixLogout(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch){
     Curent->highlight[0] = 0;
 
     werase(win);
-    box(win, 0, 0);
 
 }
 
@@ -267,15 +266,47 @@ void UpdateSaldo(WINDOW *child, LogSession *Curent, sqlite3 *db, int ch){
     }
 }
 
-/*
-void UpdateNama(WINDOW *child,LogSession *Curent, sqlite3 *db){
-    
-    char Buff[100];
-    sprintf(Buff, "UPDATE Users SET nama = '%s' WHERE id_user = %d ;", Curent->nama, Curent->id_user);
-    sqlite3_exec(db, Buff, NULL, NULL, NULL);
 
+void UpdateNama(WINDOW *child,LogSession *Curent, sqlite3 *db, int ch){
+
+    (void)ch;
+    char buff[3000]; char buff2[50] = "";
+    char *errMSG = NULL;
+
+    echo();
+    curs_set(1);
+
+    mvwprintw(child, 16, 2, "Masukan Nama : ");
+
+    wmove(child, 16, 17);
+    wgetnstr(child, buff2, sizeof(buff2) - 1);
+
+    noecho();
+    curs_set(0);
+
+    sprintf(buff, "UPDATE Users SET Nama = '%s' WHERE id_user = %d ;", buff2, Curent->id_user);
+    int rc = sqlite3_exec(db, buff, NULL, NULL, &errMSG);
+
+    if (rc != SQLITE_OK) {
+            mvwprintw(child, 10, 2, "SQL Error: %s", errMSG);
+            sqlite3_free(errMSG);
+            wrefresh(child);
+            wgetch(child);
+            return;
+        }   
+
+    werase(child);
+    box(child, 0, 0);
+    mvwprintw(child, 10, 2, "Data berhasil disimpan!");
+    wrefresh(child);
+
+    while((ch = wgetch(child))){
+        if (ch == 'b' || ch == 'B' || ch == 10){
+            return;
+        }
     }
-*/
+    
+}
 
 typedef struct {
     char barang[100];
@@ -302,17 +333,17 @@ void SellProduct(WINDOW *child, LogSession *Curent, sqlite3 *db, int ch){
     curs_set(1);
 
     //Nama
-    wmove(child, 4, 15);
+    wmove(child, 4, 12);
     wgetnstr(child, buff, sizeof(buff) - 1);
     strncpy(temp.barang, buff, sizeof(temp.barang) - 1);
 
     //Qty
-    wmove(child, 5, 15);
+    wmove(child, 5, 12);
     wgetnstr(child, buff, 5);
     temp.jumlah = atoi(buff);
 
     //Harga
-    wmove(child, 6, 15);
+    wmove(child, 6, 12);
     wgetnstr(child, buff, 20);
     temp.harga = atoi(buff);
 
