@@ -2,8 +2,9 @@
 #define STRUCT_H
 
 #define MAX_NAME 100
+#define MAX_MENU_LEVEL 10
 
-#define MAX_MENU_LEVEL 3
+#include <ncurses/ncurses.h>
 
 typedef enum {
     MENU_MAIN,

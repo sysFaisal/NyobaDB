@@ -221,6 +221,8 @@ void MenuMain(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch){
 
 // PROFILE MENU =========================================================================
 void ProfilePilihan(WINDOW *child, LogSession *Curent, sqlite3 *db, int ch){
+    (void)db;
+
     const char *Pilihan[2] = {
         "Update Saldo",
         "Update Nama"
@@ -247,22 +249,22 @@ void ProfilePilihan(WINDOW *child, LogSession *Curent, sqlite3 *db, int ch){
 
     if (choice == 1) {
         switch (Curent->highlight[1]) {
-            case 0: UpdateSaldo(child, Curent, db, ch); break;
-            case 1: UpdateNama(child, Curent, db, ch); break;
+            case 0: 
+                Curent->level = 2; 
+                break;
+
+            case 1:
+                Curent->level = 3; 
+                break;
         }
     }
 }
 
 void MenuProfile(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch){
+
     WINDOW *child = derwin(win, 18, 58, 5, 1);
     WINDOW *foto  = derwin(child, 5, 9, 1, 2);
 
-    /*
-    if (!child) {
-        child = derwin(win, 18, 58, 5, 1);
-        foto  = derwin(child, 5, 9, 1, 2);
-    }
-    */
     werase(child);
     werase(foto);
 
@@ -275,8 +277,23 @@ void MenuProfile(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch){
 
     ProfilePilihan(child, Curent, db, ch);
 
+    if (Curent->level != 1) {
+        switch (Curent->level) {
+        case 2:
+            UpdateSaldo(child, Curent, db, ch);
+            break;
 
-    if (ch == 'b' || ch == 'B') {
+        case 3:
+            UpdateNama(child, Curent, db, ch);
+            break;
+        default:
+            Curent->menu = MENU_PROFILE;
+            Curent->level = 1;
+            break;
+        }
+    }
+
+    if ((ch == 'b' || ch == 'B') && Curent->level == 1) {
         Curent->menu = MENU_MAIN;
         Curent->level = 0;
 
@@ -299,7 +316,8 @@ void UserHeader(WINDOW *header, LogSession *Curent, bool focus, sqlite3 *db){
     box(header, 0, 0);
     char buff[128] = ""; char buff1[40] = "";
 
-    mvwprintw(header, 15, 2, "ID   : %d", Curent->menu);
+    mvwprintw(header, 1, 12, "%d : %d", Curent->menu, Curent->level);
+    mvwprintw(header, 2, 2, "%d : ", Curent->menu);
     if (Curent->status != 0) {
         mvwprintw(header, 1, 2, "ID   : %d", Curent->id_user);
         mvwprintw(header, 2, 2, "Name   : %s", GetNama(Curent, db));
@@ -368,10 +386,17 @@ int ListProductCallBack(void *param, int argc, char **argv, char **azColName){
 void ListProduct(WINDOW *child, LogSession *Curent, sqlite3 *db,int ch){
     (void)ch;
 
+    int col_pos[] = {2, 7, 19, 41, 48};
+
+    mvwprintw(child, 1 , col_pos[0], "%s", "PRODUCT");
+    mvwprintw(child, 3 , col_pos[0], "%s", "ID");
+    mvwprintw(child, 3 , col_pos[1], "%s", "ID Product");
+    mvwprintw(child, 3 , col_pos[2], "%s", "Name");
+    mvwprintw(child, 3 , col_pos[3], "%s", "Qty");
+    mvwprintw(child, 3 , col_pos[4], "%s", "Cost");
+
     char Buff[100]; 
     char *errMsg = NULL;
-
-    int col_pos[] = {2, 7, 19, 41, 48};
 
     sprintf(Buff, "SELECT * FROM Product WHERE id_user = %d ;", Curent->id_user);
 
@@ -396,7 +421,8 @@ void ListProduct(WINDOW *child, LogSession *Curent, sqlite3 *db,int ch){
 
 int GetBuyerCallBack(void *data, int argc, char **argv, char **azColName){
     (void)azColName;
-    
+    (void)argc;
+
     ViewBuyer *temp = (ViewBuyer *)data;
     int row = temp->count;
 
@@ -445,9 +471,16 @@ void CekBuyer(WINDOW *child, LogSession *Curent, sqlite3 *db,int ch){
         wrefresh(child);
         return;
     }
+
+    if (ch == 'b' || ch == 'B') {
+        Curent->menu = MENU_SELL;
+        Curent->level = 1;
+        return;
+    }
 }
 
 void SellPilihan(WINDOW *child, LogSession *Curent, sqlite3 *db,int ch){
+    (void)db;
     const char *Pilihan[2] = {
         "Cek Siapa Aja Beli", 
         "Sell Product"
@@ -456,13 +489,6 @@ void SellPilihan(WINDOW *child, LogSession *Curent, sqlite3 *db,int ch){
     int choice = -1;
     if (ch != -1) {
         choice = KeypadsInput(ch, &Curent->highlight[1], 2);
-    }
-
-    if (choice == 1) {
-        switch (Curent->highlight[1]) {
-            case 0: CekBuyer(child, Curent, db, ch); break;
-            case 1: SellProduct(child, Curent, db, ch); break;
-        }
     }
 
     int i, row = 12;
@@ -483,10 +509,21 @@ void SellPilihan(WINDOW *child, LogSession *Curent, sqlite3 *db,int ch){
 
     }
 
-    if (ch == 'b' || ch == 'B') {
-        Curent->menu = MENU_MAIN;
-        Curent->level = 0;
+    if (choice == 1) {
+        switch (Curent->highlight[1]) {
+            case 0: 
+                Curent->level = 2;
+                break;
+            case 1: 
+                Curent->level = 3;
+                SellProduct(child, Curent, db, ch);
+                break;
+        }
+    }
 
+    if (ch == 'b' || ch == 'B') {
+        Curent->menu = MENU_SELL;
+        Curent->level = 1;
     }
 
 }
@@ -494,25 +531,37 @@ void SellPilihan(WINDOW *child, LogSession *Curent, sqlite3 *db,int ch){
 void MenuSell(WINDOW *win, LogSession *Curent, sqlite3 *db,int ch){
 
     WINDOW *child = derwin(win, 18, 58, 5, 1);
-    
+
     werase(child);
     box (child, 0, 0);
 
-    mvwprintw(child, 1 , 2, "%s", "PRODUCT");
-    mvwprintw(child, 3 , 2, "%s", "ID");
-    mvwprintw(child, 3 , 7, "%s", "ID Product");
-    mvwprintw(child, 3 , 19, "%s", "Name");
-    mvwprintw(child, 3 , 41, "%s", "Qty");
-    mvwprintw(child, 3 , 48, "%s", "Cost");
+    if (Curent->level == 1){
+        ListProduct(child, Curent, db, ch);
+        SellPilihan(child, Curent, db, ch);
 
-    ListProduct(child, Curent, db, ch);
-    SellPilihan(child, Curent, db, ch);
+        if ((ch == 'b' || ch == 'B') && Curent->level == 1) {
+            Curent->menu = MENU_MAIN;
+            Curent->level = 0;
+        }
+
+    } else {
+        switch (Curent->level) {
+            case 2:
+                CekBuyer(child, Curent, db, ch);
+                break;
+            /* Gagal
+            case 3:
+                //SellProduct(child, Curent, db, ch);
+                break;
+            */
+            default:
+                Curent->menu = MENU_SELL;
+                Curent->level = 1;
+                break;
+        }
+    }
 
     wrefresh(child);
-    if (ch == 'b' || ch == 'B') {
-        Curent->menu = MENU_MAIN;
-        Curent->level = 0;
-    }
 
     if (Curent->menu != MENU_SELL) {
         delwin(child);

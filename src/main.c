@@ -21,11 +21,6 @@ void LogicUser(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch) {
     switch (Curent->menu) {
 
         case MENU_MAIN:
-            // highlight utama aman
-            if (Curent->highlight[Curent->level] < 0 ||
-                Curent->highlight[Curent->level] >= 5) {
-                Curent->highlight[Curent->level] = 0;
-            }
             MenuMain(win, Curent, db, ch);
             break;
 

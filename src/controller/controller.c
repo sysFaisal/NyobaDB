@@ -232,13 +232,29 @@ void UpdateSaldo(WINDOW *child, LogSession *Curent, sqlite3 *db, int ch){
 
     wmove(child, 16, 18);
     wgetnstr(child, buff2, sizeof(buff2) - 1);
+
+    if (buff2[0] == '\0') {
+        mvwprintw(child, 16, 2, "Saldo tidak boleh kosong!");
+        wrefresh(child);
+        wgetch(child);
+        return;
+    }
+
     int Saldo = atoi(buff2);
+
+    if (Saldo < 0) {
+        mvwprintw(child, 10, 2, "Saldo tidak boleh negatif!");
+        wrefresh(child);
+        wgetch(child);
+        return;
+    }
 
     noecho();
     curs_set(0);
 
     werase(child);
     box(child, 0, 0);
+
 
     sqlite3_exec(db, buff, WalletCheckCallBack, &temp1, &errMSG);
 
@@ -268,12 +284,11 @@ void UpdateSaldo(WINDOW *child, LogSession *Curent, sqlite3 *db, int ch){
     mvwprintw(child, 12, 2, "Saldo baru : %d", Saldo);
 
     wrefresh(child);
+    
+    Curent->menu = MENU_PROFILE;
+    Curent->level = 1;
 
-    while ((ch = wgetch(child))) {
-        if (ch == 'b' || ch == 'B' || ch == 10) {
-            return;   
-        }
-    }
+    return;
 }
 
 
@@ -310,11 +325,10 @@ void UpdateNama(WINDOW *child,LogSession *Curent, sqlite3 *db, int ch){
     mvwprintw(child, 10, 2, "Data berhasil disimpan!");
     wrefresh(child);
 
-    while((ch = wgetch(child))){
-        if (ch == 'b' || ch == 'B' || ch == 10){
-            return;
-        }
-    }
+    Curent->menu = MENU_PROFILE;
+    Curent->level = 1;
+
+    return;
     
 }
 
@@ -324,8 +338,68 @@ typedef struct {
     int harga;
 } SellProductView;
 
+/*
+void SellProduct(WINDOW *child, LogSession *Curent, sqlite3 *db, int ch) {
+    char name[50] = {0}, qty_str[10] = {0}, price_str[20] = {0};
+    char query[512];
+
+    // 1. Gambar Form
+    werase(child);
+    box(child, 0, 0);
+    mvwprintw(child, 2, 2, "=== TAMBAH PRODUK BARU ===");
+    mvwprintw(child, 4, 2, "Nama Barang : ");
+    mvwprintw(child, 5, 2, "Jumlah      : ");
+    mvwprintw(child, 6, 2, "Harga Satuan: ");
+    mvwprintw(child, 8, 2, "Tekan ENTER setelah mengisi tiap kolom");
+    
+    // 2. PAKSA REFRESH ke layar sebelum input
+    wrefresh(child);
+
+    // 3. Mode Input
+    echo();
+    curs_set(1);
+
+    // Input Nama
+    mvwgetnstr(child, 4, 16, name, 49);
+    
+    // Input Qty
+    mvwgetnstr(child, 5, 16, qty_str, 9);
+    
+    // Input Harga
+    mvwgetnstr(child, 6, 16, price_str, 19);
+
+    noecho();
+    curs_set(0);
+
+    // 4. Validasi & Simpan
+    int qty = atoi(qty_str);
+    int price = atoi(price_str);
+
+    if (strlen(name) > 0 && qty > 0 && price > 0) {
+        sprintf(query, "INSERT INTO Product (id_user, Nama, Jumlah, Harga) VALUES (%d, '%s', %d, %d);",
+                Curent->id_user, name, qty, price);
+        
+        char *err = NULL;
+        if (sqlite3_exec(db, query, NULL, NULL, &err) == SQLITE_OK) {
+            mvwprintw(child, 10, 2, "SUKSES: Data tersimpan!");
+        } else {
+            mvwprintw(child, 10, 2, "GAGAL: %s", err);
+            sqlite3_free(err);
+        }
+    } else {
+        mvwprintw(child, 10, 2, "ERROR: Input tidak valid!");
+    }
+
+    mvwprintw(child, 12, 2, "Tekan tombol apa saja untuk kembali...");
+    wrefresh(child);
+    
+    // 5. BERSIHKAN BUFFER
+    flushinp(); 
+    wgetch(child); // Menunggu user menekan tombol sebelum benar-benar keluar
+}
+    */
+
 void SellProduct(WINDOW *child, LogSession *Curent, sqlite3 *db, int ch){
-    (void)ch;
 
     SellProductView temp = {0};
     char buff[512];
@@ -338,6 +412,8 @@ void SellProduct(WINDOW *child, LogSession *Curent, sqlite3 *db, int ch){
     mvwprintw(child, 5, 2, "Qty    : ");
     mvwprintw(child, 6, 2, "Cost   : ");
     mvwprintw(child, 8, 2, "[ENTER] Simpan");
+
+    wrefresh(child);
 
     echo();
     curs_set(1);
@@ -393,12 +469,11 @@ void SellProduct(WINDOW *child, LogSession *Curent, sqlite3 *db, int ch){
 
     mvwprintw(child, 10, 2, "Data berhasil disimpan!");
     wrefresh(child);
+    wgetch(child);
 
-    while ((ch = wgetch(child))) {
-        if (ch == 'b' || ch == 'B' || ch == 10) {
-            return;   
-        }
-    }
+    Curent->menu = MENU_SELL;
+    Curent->level = 1;
+    return;
 }
 
 void BuyProduct(WINDOW *child, LogSession *Curent, sqlite3 *db,
@@ -472,7 +547,9 @@ void BuyProduct(WINDOW *child, LogSession *Curent, sqlite3 *db,
 
     sqlite3_exec(db, "COMMIT;", NULL, NULL, NULL);
 
-    mvwprintw(child, 18, 2, "Transaksi berhasil!");
+    werase(child);
+    box(child, 0, 0);
+    mvwprintw(child, 14, 2, "Transaksi berhasil!");
     wrefresh(child);
     wgetch(child);
     return;
