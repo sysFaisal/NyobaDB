@@ -38,7 +38,7 @@ void LogicUser(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch) {
             break;
 
         case MENU_BUY:
-            // MenuBuy(win, Curent, db, ch);
+            MenuBuy(win, Curent, db, ch);
             break;
 
         case MENU_CHAT:

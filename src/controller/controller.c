@@ -11,6 +11,7 @@
 typedef struct {
     int id_user;
     char nama[100];
+    int saldo;
 } UserList;
 
 typedef struct {
@@ -27,6 +28,12 @@ int PrintUserCallBack(void *param, int argc, char **argv, char **azColName){
  
     temp->list[temp->count].id_user = atoi(argv[0]);
     strcpy(temp->list[temp->count].nama, argv[1]);
+
+    if (argv[2] == NULL) {
+        temp->list[temp->count].saldo = 0;
+    } else {
+        temp->list[temp->count].saldo = atoi(argv[2]);
+    }
 
     temp->count++;
     return 0;
@@ -73,7 +80,8 @@ int PrintList(WINDOW *win, sqlite3 *db){
     temp.count = 0;
     temp.list = List;
 
-    const char *promptsql = "SELECT * FROM Users;";
+    const char *promptsql = "SELECT Users.*, Wallet.saldo FROM Users LEFT JOIN Wallet ON Users.id_user = Wallet.id_user;"
+            ;
 
     sqlite3_exec(db, promptsql, PrintUserCallBack, &temp, NULL);
 
@@ -95,7 +103,8 @@ int PrintList(WINDOW *win, sqlite3 *db){
 
         mvwprintw(child, 1 , 2, "%s", "No");
         mvwprintw(child, 1 , 7, "%s", "Id_user");
-        mvwprintw(child, 1 , 20, "%s", "Nama");
+        mvwprintw(child, 1 , 18, "%s", "Nama");
+        mvwprintw(child, 1 , 29, "%s", "Saldo");
 
         wrefresh(child);
 
@@ -114,14 +123,16 @@ int PrintList(WINDOW *win, sqlite3 *db){
 
                 mvwprintw(child, row + i, 2, "%d", i + 1);
                 mvwprintw(child, row + i, 7, "%d", temp.list[i].id_user);
-                mvwprintw(child, row + i, 20, "%s", temp.list[i].nama);
+                mvwprintw(child, row + i, 18, "%s", temp.list[i].nama);
+                mvwprintw(child, row + i, 29, "%d", temp.list[i].saldo);
 
                 wattroff(child, A_REVERSE);
             } else {
 
                 mvwprintw(child, row + i, 2, "%d", i + 1);
                 mvwprintw(child, row + i, 7, "%d", temp.list[i].id_user);
-                mvwprintw(child, row + i, 20, "%s", temp.list[i].nama);
+                mvwprintw(child, row + i, 18, "%s", temp.list[i].nama);
+                mvwprintw(child, row + i, 29, "%d", temp.list[i].saldo);
 
             }
         }
@@ -255,7 +266,6 @@ void UpdateSaldo(WINDOW *child, LogSession *Curent, sqlite3 *db, int ch){
 
     mvwprintw(child, 10, 2, "Data berhasil disimpan!");
     mvwprintw(child, 12, 2, "Saldo baru : %d", Saldo);
-    mvwprintw(child, 14, 2, "[ENTER / B] Kembali");
 
     wrefresh(child);
 
@@ -389,4 +399,88 @@ void SellProduct(WINDOW *child, LogSession *Curent, sqlite3 *db, int ch){
             return;   
         }
     }
+}
+
+void BuyProduct(WINDOW *child, LogSession *Curent, sqlite3 *db,
+                int id_seller, int id_product, int jumlah,
+                int harga, const char *nama)
+{
+    echo();
+    curs_set(1);
+
+    char qty[32];
+    int jumlah_buy;
+
+    mvwprintw(child, 16, 2, "Jumlah beli : ");
+    wmove(child, 16, 16);
+    wgetnstr(child, qty, sizeof(qty) - 1);
+
+    noecho();
+    curs_set(0);
+
+    jumlah_buy = atoi(qty);
+
+
+    if (jumlah_buy <= 0 || jumlah_buy > jumlah) {
+        mvwprintw(child, 15, 2, "Jumlah beli tidak valid!");
+        wrefresh(child);
+        wgetch(child);
+        return;
+    }
+
+    int totalharga = jumlah_buy * harga;
+    if (totalharga > GetSaldo(Curent, db)) {
+        mvwprintw(child, 15, 2, "Uang Tidak Cukup!");
+        wrefresh(child);
+        wgetch(child);
+        return;
+    }
+    char sql[1024];
+    char *errMSG = NULL;
+
+    sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, NULL, NULL);
+
+    snprintf(sql, sizeof(sql) - 1,
+        "INSERT INTO Transaksi "
+        "(id_buyer, id_seller, id_product, jumlah, total_harga, nama_barang, harga) "
+        "VALUES (%d, %d, %d, %d, %d, '%s', %d);",
+        Curent->id_user, id_seller, id_product,
+        jumlah_buy, totalharga, nama, harga
+    );
+
+    if (sqlite3_exec(db, sql, NULL, NULL, &errMSG) != SQLITE_OK)
+        goto rollback;
+
+    snprintf(sql, sizeof(sql),
+        "UPDATE Product SET Jumlah = Jumlah - %d WHERE id_product = %d;",
+        jumlah_buy, id_product
+    );
+    if (sqlite3_exec(db, sql, NULL, NULL, &errMSG) != SQLITE_OK)
+        goto rollback;
+
+    snprintf(sql, sizeof(sql),
+        "UPDATE Wallet SET saldo = saldo + %d WHERE id_user = %d;",
+        totalharga, id_seller
+    );
+    sqlite3_exec(db, sql, NULL, NULL, NULL);
+
+    snprintf(sql, sizeof(sql),
+        "UPDATE Wallet SET saldo = saldo - %d WHERE id_user = %d;",
+        totalharga, Curent->id_user
+    );
+    sqlite3_exec(db, sql, NULL, NULL, NULL);
+
+    sqlite3_exec(db, "COMMIT;", NULL, NULL, NULL);
+
+    mvwprintw(child, 18, 2, "Transaksi berhasil!");
+    wrefresh(child);
+    wgetch(child);
+    return;
+
+rollback:
+    sqlite3_exec(db, "ROLLBACK;", NULL, NULL, NULL);
+    mvwprintw(child, 18, 2, "Transaksi gagal: %s", errMSG);
+    sqlite3_free(errMSG);
+    wrefresh(child);
+    wgetch(child);
 }

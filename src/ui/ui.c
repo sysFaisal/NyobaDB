@@ -85,6 +85,33 @@ void ui_draw(){
     draw_bottom();
 }
 
+
+// GET PRODUCT =======================================================================
+int GetProductCallBack(void *data, int argc, char **argv, char **azColName){
+    (void)azColName;
+    (void)argc;
+    (void)argv;
+
+    int *test = (int *)data;
+    *test = *test + 1;
+
+    return 0;
+}
+
+int GetProduct(LogSession *Curent, sqlite3 *db){
+    char buff[128];
+    int MyProduct = 0;
+    sprintf(buff,
+        "SELECT * FROM Product WHERE id_user = %d;",
+        Curent->id_user
+    );
+
+    sqlite3_exec(db, buff, GetProductCallBack, &MyProduct, NULL);
+    return  MyProduct;
+}
+
+// END CODE =========================================================================
+
 // GET NAMA =========================================================================
 int GetNamaCallBack(void *data, int argc, char **argv, char **azColName){
     (void)azColName;
@@ -111,6 +138,8 @@ char *GetNama(LogSession *Curent, sqlite3 *db){
     sqlite3_exec(db, buff, GetNamaCallBack, nama, NULL);
     return nama;
 }
+// END CODE =========================================================================
+
 
 // GET SALDO =========================================================================
 int GetSaldoCallBack(void *data, int argc, char **argv, char **azColName){
@@ -268,11 +297,18 @@ void MenuProfile(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch){
 // HEADER ========================================================================
 void UserHeader(WINDOW *header, LogSession *Curent, bool focus, sqlite3 *db){
     box(header, 0, 0);
+    char buff[128] = ""; char buff1[40] = "";
 
     mvwprintw(header, 15, 2, "ID   : %d", Curent->menu);
     if (Curent->status != 0) {
         mvwprintw(header, 1, 2, "ID   : %d", Curent->id_user);
-        mvwprintw(header, 2, 2, "Nama   : %s", GetNama(Curent, db));
+        mvwprintw(header, 2, 2, "Name   : %s", GetNama(Curent, db));
+
+        sprintf(buff1, "Product Total : %d", GetProduct(Curent, db));
+        sprintf(buff, "Balance : %d", GetSaldo(Curent, db));
+
+        mvwprintw(header, 2, 58 - 2 - strlen(buff1), "%s", buff1);
+        mvwprintw(header, 1, 58 - 2 - strlen(buff), "%s", buff);
 
         if (focus == true) {
             const char *Panel = " Panel User : Active ";
@@ -300,6 +336,13 @@ typedef struct {
     int *call_pos;
 } ViewSell;
 
+typedef struct {
+    int count;
+    LogSession *Curent;
+    WINDOW *child;
+    int *call_pos;
+} ViewBuyer;
+
 int ListProductCallBack(void *param, int argc, char **argv, char **azColName){
     (void)azColName;
     (void)argc;
@@ -307,10 +350,15 @@ int ListProductCallBack(void *param, int argc, char **argv, char **azColName){
     ViewSell *temp = (ViewSell *)param;
     int row = temp->count;
 
+    
     mvwprintw(temp->child, row, temp->call_pos[0], "You");
     mvwprintw(temp->child, row, temp->call_pos[1], "%d", atoi(argv[1]));
     mvwprintw(temp->child, row, temp->call_pos[2], "%s", argv[2]);
-    mvwprintw(temp->child, row, temp->call_pos[3] + 1, "%d", atoi(argv[3]));
+    if (atoi(argv[3]) <= 0) {
+        mvwprintw(temp->child, row, temp->call_pos[3], "S%dld", atoi(argv[3]));
+    } else {
+        mvwprintw(temp->child, row, temp->call_pos[3], "%d", atoi(argv[3]));
+    }
     mvwprintw(temp->child, row, temp->call_pos[4], "%d", atoi(argv[4]));
 
     temp->count++;
@@ -346,9 +394,62 @@ void ListProduct(WINDOW *child, LogSession *Curent, sqlite3 *db,int ch){
 
 }
 
+int GetBuyerCallBack(void *data, int argc, char **argv, char **azColName){
+    (void)azColName;
+    
+    ViewBuyer *temp = (ViewBuyer *)data;
+    int row = temp->count;
+
+    mvwprintw(temp->child, row, temp->call_pos[0], "%s", argv[2]);
+    mvwprintw(temp->child, row, temp->call_pos[1], "%s", argv[1]);
+    mvwprintw(temp->child, row, temp->call_pos[2], "%s", argv[0]);
+    mvwprintw(temp->child, row, temp->call_pos[3], "%s", argv[4]);
+    mvwprintw(temp->child, row, temp->call_pos[4], "%s", argv[5]);
+    mvwprintw(temp->child, row, temp->call_pos[5], "%.15s", argv[6]);
+
+    temp->count++;
+    return 0;
+}
+
+void CekBuyer(WINDOW *child, LogSession *Curent, sqlite3 *db,int ch){
+
+    char buff[256]; char *errMsg = NULL; int col_pos[] = {2, 7, 15, 24, 29, 39};
+    sprintf(buff, "SELECT * FROM Transaksi WHERE id_seller = %d", Curent->id_user);
+    
+    ViewBuyer temp;
+    temp.count = 2;
+    temp.child = child;
+    temp.Curent = Curent;
+    temp.call_pos = col_pos;
+
+    werase(child);
+    box(child, 0, 0);
+
+    mvwprintw(child, 1, col_pos[0], "ID ");
+    mvwprintw(child, 1, col_pos[1], "Buyyer");
+    mvwprintw(child, 1, col_pos[2], "IdTranc");
+    mvwprintw(child, 1, col_pos[3], "Qty");
+    mvwprintw(child, 1, col_pos[4], "Total");
+    mvwprintw(child, 1, col_pos[5], "Name Product");
+
+    int rc = sqlite3_exec(db, buff, GetBuyerCallBack, &temp, &errMsg);
+
+    if (rc != SQLITE_OK) {
+        mvwprintw(child, 15, 2, "SQL Error: %s", errMsg);
+        sqlite3_free(errMsg);
+        return;
+    }
+
+    if (temp.count == 2) {
+        mvwprintw(child, 2, 2, "Tidak ada data user!");
+        wrefresh(child);
+        return;
+    }
+}
+
 void SellPilihan(WINDOW *child, LogSession *Curent, sqlite3 *db,int ch){
     const char *Pilihan[2] = {
-        "Update Product", 
+        "Cek Siapa Aja Beli", 
         "Sell Product"
     };
 
@@ -359,7 +460,7 @@ void SellPilihan(WINDOW *child, LogSession *Curent, sqlite3 *db,int ch){
 
     if (choice == 1) {
         switch (Curent->highlight[1]) {
-            case 0: mvwprintw(child, 15, 2, "Pilihan > %s", Pilihan[Curent->highlight[1]]); break;
+            case 0: CekBuyer(child, Curent, db, ch); break;
             case 1: SellProduct(child, Curent, db, ch); break;
         }
     }
@@ -406,6 +507,148 @@ void MenuSell(WINDOW *win, LogSession *Curent, sqlite3 *db,int ch){
 
     ListProduct(child, Curent, db, ch);
     SellPilihan(child, Curent, db, ch);
+
+    wrefresh(child);
+    if (ch == 'b' || ch == 'B') {
+        Curent->menu = MENU_MAIN;
+        Curent->level = 0;
+    }
+
+    if (Curent->menu != MENU_SELL) {
+        delwin(child);
+    }
+}
+// END CODE =========================================================================
+
+
+// BUY MENU =========================================================================
+typedef struct {
+    int id_user;
+    int id_product;
+    char nama[100];
+    int jumlah;
+    int harga;
+} AllProduct;
+
+typedef struct {
+    int count;
+    int index;
+    LogSession *Curent;
+    WINDOW *child;
+    int *call_pos;
+    AllProduct *prod;
+} ViewProduct;
+
+int AllListProductCallBack(void *param, int argc, char **argv, char **azColName){
+    (void)azColName;
+    (void)argc;
+
+    ViewProduct *temp = (ViewProduct *)param;
+
+    if (atoi(argv[3]) > 0) {
+        temp->prod[temp->index].id_user = atoi(argv[0]);
+        temp->prod[temp->index].id_product = atoi(argv[1]);
+        strcpy(temp->prod[temp->index].nama, argv[2]);
+        temp->prod[temp->index].jumlah = atoi(argv[3]);
+        temp->prod[temp->index].harga = atoi(argv[4]);
+
+        temp->index++;
+        temp->count++;
+    }
+
+    return 0;
+}
+
+void AllListProduct(WINDOW *child, LogSession *Curent, sqlite3 *db,int ch){
+    (void)ch;
+    AllProduct arr[40] = {0};
+
+    char *errMsg = NULL;
+
+    int col_pos[] = {2, 9, 19, 41, 48};
+
+    const char *Prompt = "SELECT * FROM Product;";
+
+    ViewProduct temp;
+    temp.prod = arr;
+    temp.index = 0;
+    temp.child = child;
+    temp.Curent = Curent;
+    temp.call_pos = col_pos;
+
+    int rc = sqlite3_exec(db, Prompt, AllListProductCallBack, &temp, &errMsg);
+    int choce = -1;
+
+    if (ch != -1) {
+        choce = KeypadsInput(ch, &Curent->highlight[1], temp.index);
+    }
+
+    if (choce == 1) {
+
+        if (temp.prod[Curent->highlight[1]].id_user != Curent->id_user) {
+
+            AllProduct *p = &temp.prod[Curent->highlight[1]];
+
+            mvwprintw(child, 15, 2, "Pilihan > %d",temp.prod[Curent->highlight[1]].id_product);
+            BuyProduct(child, Curent, db, p->id_user, p->id_product, p->jumlah, p->harga ,p->nama);
+
+        } else {
+            mvwprintw(child, 16, 2, "Pilihan > Barang Punya Lu");
+        }
+
+    }
+
+    int row1 = 4;
+    mvwprintw(child, 16, 47, "%d : %d : %d", Curent->highlight[1], temp.prod[Curent->highlight[1]].id_user, temp.prod[Curent->highlight[1]].id_product);
+
+    for (int i = 0; i < temp.index; i++) {
+        int is_selected = (i == Curent->highlight[1]);
+        int is_me = (temp.prod[i].id_user == Curent->id_user);
+
+        if (is_selected)
+            wattron(child, A_REVERSE);
+
+        if (is_me)
+            mvwprintw(child, row1, temp.call_pos[0], "You");
+        else
+            mvwprintw(child, row1, temp.call_pos[0], "%d", temp.prod[i].id_user);
+
+        mvwprintw(child, row1, temp.call_pos[1], "%d", temp.prod[i].id_product);
+        mvwprintw(child, row1, temp.call_pos[2], "%s", temp.prod[i].nama);
+        mvwprintw(child, row1, temp.call_pos[3], "%d", temp.prod[i].jumlah);
+        mvwprintw(child, row1, temp.call_pos[4], "%d", temp.prod[i].harga);
+
+        if (is_selected)
+            wattroff(child, A_REVERSE);
+
+        row1++;
+    }
+
+
+    if (rc != SQLITE_OK) {
+        mvwprintw(child, 5, 2, "SQL Error: %s", errMsg);
+        sqlite3_free(errMsg);
+
+    } else if (row1 == 4) {
+        mvwprintw(child, 4, 2, "Data Kosong / Tidak Ditemukan");
+    }
+
+}
+
+void MenuBuy(WINDOW *win, LogSession *Curent, sqlite3 *db,int ch){
+    WINDOW *child = derwin(win, 18, 58, 5, 1);
+    
+    werase(child);
+    box (child, 0, 0);
+
+    mvwprintw(child, 1 , 2, "%s", "LIST PRODUCT");
+    mvwprintw(child, 3 , 2, "%s", "ID Sel");
+    mvwprintw(child, 3 , 9, "%s", "ID Prod");
+    mvwprintw(child, 3 , 19, "%s", "Name");
+    mvwprintw(child, 3 , 41, "%s", "Qty");
+    mvwprintw(child, 3 , 48, "%s", "Cost");
+
+    AllListProduct(child, Curent, db, ch);
 
     wrefresh(child);
     if (ch == 'b' || ch == 'B') {

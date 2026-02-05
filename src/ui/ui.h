@@ -14,12 +14,14 @@ void ui_init();
 void ui_draw();
 char *GetNama(LogSession *Curent, sqlite3 *db);
 int GetSaldo(LogSession *Curent, sqlite3 *db);
+int GetProduct(LogSession *Curent, sqlite3 *db);
 
 
 void MenuProfile(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch);
 void MenuLogout(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch);
 void MenuMain(WINDOW *win, LogSession *Curent, sqlite3 *db, int ch);
 void MenuSell(WINDOW *win, LogSession *Curent, sqlite3 *db,int ch);
+void MenuBuy(WINDOW *win, LogSession *Curent, sqlite3 *db,int ch);
 void UserHeader(WINDOW *header, LogSession *Curent, bool focus, sqlite3 *db);
 
 #endif
